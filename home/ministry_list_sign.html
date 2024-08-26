@@ -1,114 +1,123 @@
 <?
+// 데이터베이스 연결과 필요한 함수들을 포함합니다.
 include "../include/db_connect.php";
 include "../include/function.php";
 
+// 세션 유효성을 검사합니다.
 session_check();
 
-
+// 요청된 구역 인덱스, 서비스 인덱스, 날짜를 받아옵니다.
 $req_map_sub_idx=$_REQUEST["map_sub_idx"];
 $req_service_idx=$_REQUEST["service_idx"];
 $req_month_date=$_REQUEST["month_date"];
 
-//봉사형태값이 올바른지 확인(숫자만 가능)
+// 서비스 인덱스가 숫자인지 확인합니다. 숫자가 아닐 경우 홈으로 리다이렉트합니다.
 if (!is_numeric($req_service_idx)){
 	echo "<script type='text/javascript'>location.href='/home/';</script>";
 	exit;
 }
 
-//날짜형식이 올바른지 확인
+// 날짜 형식이 올바른지 확인합니다. 올바르지 않으면 홈으로 리다이렉트합니다.
 if (!chkdate($req_month_date)){
 	echo "<script type='text/javascript'>location.href='/home/';</script>";
 	exit;	
 }
 
+// 구역 인덱스가 빈 값이거나 null인지 확인하고, 그렇다면 홈으로 리다이렉트합니다.
 if ($req_map_sub_idx=="" || $req_map_sub_idx==null){
 	echo "<script type='text/javascript'>location.href='/home/';</script>";
 	exit;
 }
 
+// 구역 인덱스가 숫자인지 확인합니다. 숫자가 아니면 홈으로 리다이렉트합니다.
 if (!is_numeric($req_map_sub_idx)){
 	echo "<script type='text/javascript'>location.href='/home/';</script>";
 	exit;
 }
 
-	
-	//올바른 map_sub_idx 값인지 확인
-	$sql="select * from ministry_list where map_sub_idx='$req_map_sub_idx'";
-	$result_type=mysql_query($sql);
-	if (!$result_type){
-	 echo "<script type='text/javascript'>location.href='/home/?e=result_type&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
+// 올바른 구역 인덱스 값인지 확인하기 위해 DB에서 조회합니다.
+$sql="select * from ministry_list where map_sub_idx='$req_map_sub_idx'";
+$result_type=mysql_query($sql);
+
+// 조회 결과가 없을 경우 홈으로 리다이렉트합니다.
+if (!$result_type){
+	echo "<script type='text/javascript'>location.href='/home/?e=result_type&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
+}
+
+// 조회된 행의 수를 확인합니다.
+$num_rows = mysql_num_rows($result_type);
+
+// 조회된 행이 없을 경우 홈으로 리다이렉트합니다.
+if ($num_rows==0){
+	echo "<script type='text/javascript'>location.href='/home/?e=num_rows&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
+}
+
+// 조회된 데이터를 배열로 가져옵니다.
+$rs=mysql_fetch_array($result_type);
+$map_sub_idx = $rs[map_sub_idx];
+$ministry_date = $rs[ministry_date];
+$ministry_start_date = $rs[ministry_start_date];
+$ministry_member_idx = $rs[ministry_member_idx];
+$c_map_list_house_idx = $rs["map_list_house_idx"]; // 조건: 가구형태
+$c_map_list_visit = $rs["map_list_visit"]; // 조건: 부재자
+$c_map_list_enter = $rs["map_list_enter"]; // 조건: 방문거절, 방문금지
+
+// 요청된 구역 인덱스와 조회된 구역 인덱스가 다를 경우 오류 메시지를 출력하고 홈으로 리다이렉트합니다.
+if ($map_sub_idx != $req_map_sub_idx){
+	echo "<script>
+		alert('sub idx value error!!');
+		location.href='/home/';
+		</script>";
+	exit;		
+}
+
+// 요청된 날짜와 조회된 날짜가 다를 경우 오류 메시지를 출력하고 홈으로 리다이렉트합니다.
+if ($ministry_date != $req_month_date){
+	echo "<script>
+		alert('date value error!!');
+		location.href='/home/';
+		</script>";
+	exit;
+}
+
+// 현재 사용자가 해당 봉사에 참여 중인지 확인합니다.
+$m_idx=$_SESSION['m_idx'];
+$arr_m_m_cnt=0;
+if ($ministry_member_idx != "" && $ministry_member_idx != null){
+	$arr_m_m_idx=explode(",",$ministry_member_idx);
+	$arr_m_m_cnt=count($arr_m_m_idx);
+}else{
+	echo "<script>
+		alert('error!!');
+		location.href='/home/';
+		</script>";
+	exit;
+}
+
+// 참여 중인지 여부를 확인합니다.
+$is_member=false;
+for ($i=0;$i<$arr_m_m_cnt;$i++){
+	if ($arr_m_m_idx[$i]==$m_idx){
+		$is_member=true;
+		break;
 	}
-	$num_rows = mysql_num_rows($result_type);
+}
 
-	if ($num_rows==0){
-	 echo "<script type='text/javascript'>location.href='/home/?e=num_rows&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
-	}
+// 참여 중이지 않다면 오류 메시지를 출력하고 홈으로 리다이렉트합니다.
+if (!$is_member){
+	echo "<script>
+		alert('error!!');
+		location.href='/home/';
+		</script>";
+	exit;
+}
 
-	$rs=mysql_fetch_array($result_type);
-	$map_sub_idx = $rs[map_sub_idx];
-	$ministry_date = $rs[ministry_date];
-	$ministry_start_date = $rs[ministry_start_date];
-	$ministry_member_idx = $rs[ministry_member_idx];
-	$c_map_list_house_idx = $rs["map_list_house_idx"];		//조건 : 가구형태
-	$c_map_list_visit = $rs["map_list_visit"];				//조건 : 부재자
-	$c_map_list_enter = $rs["map_list_enter"];				//조건 : 방문거절, 방문금지
-
-
-	if ($map_sub_idx != $req_map_sub_idx){
-		echo "<script>
-			alert('sub idx value error!!');
-			location.href='/home/';
-			</script>";
-		exit;		
-	}
-
-	if ($ministry_date != $req_month_date){
-		echo "<script>
-			alert('date value error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-	//참여중인지 여부확인
-	$m_idx=$_SESSION['m_idx'];
-	$arr_m_m_cnt=0;
-	if ($ministry_member_idx != "" && $ministry_member_idx != null){
-		$arr_m_m_idx=explode(",",$ministry_member_idx);
-		$arr_m_m_cnt=count($arr_m_m_idx);
-	}else{
-		echo "<script>
-			alert('error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-	$is_member=false;
-	for ($i=0;$i<$arr_m_m_cnt;$i++){
-		if ($arr_m_m_idx[$i]==$m_idx){
-			$is_member=true;
-			break;
-		}
-	}
-
-	if (!$is_member){
-		echo "<script>
-			alert('error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-
-
-	//시작일자를 등록
-	//시작일자 값이 없으면 등록을 한다.
-	if ($ministry_start_date == "" || $ministry_start_date == null){
-		$ministry_start_date_isnull="Y";
-	}else{
-		$ministry_start_date_isnull="N";
-	}
+// 봉사가 시작되지 않은 경우 시작일자를 등록합니다.
+if ($ministry_start_date == "" || $ministry_start_date == null){
+	$ministry_start_date_isnull="Y";
+}else{
+	$ministry_start_date_isnull="N";
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
@@ -117,54 +126,44 @@ if (!is_numeric($req_map_sub_idx)){
 </head>
 <body> 
 
-    <!-- Fixed navbar -->
-    <!-- <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-          <a class="navbar-brand" href="/service/"><img src="/img/icon-home.png"></a>
-          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
-		  <div class="navpress">
-			  <a href="#"><strong>홈</strong></a>
-		  </div>
-      </div>
-    </nav> -->
-
     <div class="page-home">
       <div class="container">	  
 
 		<?
-		$sql="SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
-		$result_type=mysql_query($sql);
-		$rs=mysql_fetch_array($result_type);
-		$map_sub_no=strip_tags($rs[map_sub_no]);
-		$map_sub_info=strip_tags($rs[map_sub_info]);
-		$map_sub_cnt=$rs[map_sub_cnt];
-		$map_sub_addr=$rs[map_sub_addr];
-		$map_sub_polygon=$rs[map_sub_polygon];
-		$bbb="";
+// 선택된 구역의 정보를 DB에서 가져옵니다.
+$sql="SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
+$result_type=mysql_query($sql);
+$rs=mysql_fetch_array($result_type);
+$map_sub_no=strip_tags($rs[map_sub_no]);
+$map_sub_info=strip_tags($rs[map_sub_info]);
+$map_sub_cnt=$rs[map_sub_cnt];
+$map_sub_addr=$rs[map_sub_addr];
+$map_sub_polygon=$rs[map_sub_polygon];
+$bbb="";
 
+// 다각형 좌표가 있으면 이를 설정합니다.
+if ($map_sub_polygon!=""){
+$chars = explode ("),(", $map_sub_polygon);
 
-		if ($map_sub_polygon!=""){
-		$chars = explode ("),(", $map_sub_polygon);
+for ($i=0;$i<count($chars);$i++)
+{
+  if ($i == 0){
+	$sss.="new daum.maps.LatLng".$chars[$i]."),";
 
-		for ($i=0;$i<count($chars);$i++)
-		{
-		  if ($i == 0){
-			$sss.="new daum.maps.LatLng".$chars[$i]."),";
+  }else{
+	  if ($i==count($chars)-1){
+		$sss.= "new daum.maps.LatLng(".$chars[$i];
+	  }else{
+		$sss.= "new daum.maps.LatLng(".$chars[$i]."),";
+	  }
+  }
+  
+}
 
-		  }else{
-			  if ($i==count($chars)-1){
-				$sss.= "new daum.maps.LatLng(".$chars[$i];
-			  }else{
-				$sss.= "new daum.maps.LatLng(".$chars[$i]."),";
-			  }
-		  }
-		  
-		}
+$bbb = $sss;
+}
 
-		$bbb = $sss;
-		}
-
-		?>
+?>
 		<div class="row panel panel-success">
 		  <div class="panel-heading"><strong>구역번호 : <?=$map_sub_no ?></strong><br>
 		    구역명 : <?=$map_sub_info ?><br>
@@ -182,7 +181,8 @@ if (!is_numeric($req_map_sub_idx)){
 		  </div>
 		</div>
 		
-		<?if (site_option("ministry_list_map_show")){?>
+		<?// 사이트 옵션에 따라 지도를 표시할지 여부를 결정합니다.
+		if (site_option("ministry_list_map_show")){?>
 		<div id="demo" class="collapse in">
 		<div id="map" style="width:100%;height:300px;"></div>
 		</div>
@@ -191,6 +191,7 @@ if (!is_numeric($req_map_sub_idx)){
 		<?}?>
 
 <?
+// 추출된 내용이 있는 경우 이를 표시합니다.
 if ($c_map_list_house_idx!="" || $c_map_list_visit!="" || $c_map_list_enter!=""){
 ?>
 <div class="row fontsize12 paddingbottom15 paddingleft10">
@@ -247,12 +248,12 @@ if ($c_map_list_enter=="Y"){
 <script src="/bootstrap/js/bootstrap.min.js"></script>
 <script>
 
+// 필요한 변수를 초기화합니다.
 	var map_sub_idx="<?=$req_map_sub_idx ?>";
 	var service_idx="<?=$service_idx ?>";
 	var ministry_recycle_second="<?=MINISTRY_RECYCLE_SECOND ?>";
-//	var ministry_recycle_second="3000";
 
-
+// map_sub_idx 값이 있는지 확인합니다. 없으면 홈으로 리다이렉트합니다.
 	if (map_sub_idx!="") {
 		if (service_idx!=2){
 			map_list(map_sub_idx);
@@ -263,8 +264,8 @@ if ($c_map_list_enter=="Y"){
 		location.href="/home/";
 	}
 
+// 가구 리스트를 불러오는 함수입니다.
 	function map_list(map_sub_idx){
-		//가구 리스트		
 
 		$.ajax({
 			type: "post",
@@ -308,8 +309,8 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
+// 지도를 표시하는 함수입니다.
 	function map_view(map_sub_no, map_sub_idx, map_sub_info, map_sub_addr){
-		//구역지도 확인
 
 		var h=$(window).height()-150;
 
@@ -323,9 +324,8 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
-
+// 가구 정보를 수정하는 함수입니다.
 	function map_info_edit(){
-		//가구정보수정
 
 		var map_list_idx = $("#map_list_idx").val();
 
@@ -348,8 +348,8 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
+// 봉사 기록을 삭제하는 함수입니다.
 	function map_info_view_del(map_content_idx){
-		//봉사기록삭제
 
 		$.ajax({
 			type: "post",
@@ -364,8 +364,8 @@ if ($c_map_list_enter=="Y"){
 		});		
 	}
 
+// 봉사 기록을 보기 위한 함수입니다.
 	function map_info_view(map_list_idx, map_list_road, map_list_road_no, map_list_floor, map_list_info, map_list_house_idx){
-		//봉사기록보기
 
 		map_info = map_list_road+" "+map_list_road_no+" "+map_list_floor+" "+map_list_info;
 
@@ -389,8 +389,8 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
+// 봉사 기록을 저장하는 함수입니다.
 	function map_info_save() {
-		//봉사기록저장
 
 		var map_list_idx = $("#map_list_idx").val();
 		var map_content_content = $("#map_content_content").val();
@@ -406,8 +406,8 @@ if ($c_map_list_enter=="Y"){
 		});
 	}
 
+// 방문 항목을 체크하는 함수입니다.
 	function map_list_visit_Y(map_sub_idx, map_list_idx){
-		//방문 항목 체크
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var visit_N=$("#map_list_visit_N_"+map_list_idx);
@@ -425,8 +425,8 @@ if ($c_map_list_enter=="Y"){
 		map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
 	}
 
+// 부재자 항목을 체크하는 함수입니다.
 	function map_list_visit_N(map_sub_idx, map_list_idx){
-		//부재자 항목 체크
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var visit_N=$("#map_list_visit_N_"+map_list_idx);
@@ -444,8 +444,8 @@ if ($c_map_list_enter=="Y"){
 		map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
 	}
 
+// 방문 거절 항목을 체크하는 함수입니다.
 	function map_list_enter_Y(map_sub_idx, map_list_idx){
-		//방문 거절 항목 체크
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
@@ -466,8 +466,6 @@ if ($c_map_list_enter=="Y"){
 			map_list_visit_Y(map_sub_idx, map_list_idx);
 		}
 
-
-//		enter_Y.prop("checked",true);
 		enter_N.prop("checked",false);
 
 		var set_enter="";
@@ -481,14 +479,13 @@ if ($c_map_list_enter=="Y"){
 		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
 	}
 
+// 방문 금지 항목을 체크하는 함수입니다.
 	function map_list_enter_N(map_sub_idx, map_list_idx){
-		//방문 금지 항목 체크
 
 		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
 		var enter_N=$("#map_list_enter_N_"+map_list_idx);
 
 		enter_Y.prop("checked",false);
-//		enter_N.prop("checked",true);
 
 		var set_enter="";
 
@@ -501,6 +498,7 @@ if ($c_map_list_enter=="Y"){
 		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
 	}
 
+// 봉사 기록을 업데이트하는 함수입니다.
 	function map_list_update(map_sub_idx, map_list_idx, field, val){
 
 		var ministry_start_date_isnull="<?=$ministry_start_date_isnull ?>";
@@ -523,8 +521,8 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
+// 저장 버튼을 눌렀을 때 실행되는 함수입니다.
 	function ministry_complete(){
-		//저장 버튼을 눌렀을 때
 
 		var service_idx="<?=$req_service_idx ?>";
 		var month_date="<?=$req_month_date ?>";
@@ -549,8 +547,9 @@ if ($c_map_list_enter=="Y"){
 		});			
 
 	}
+
+// 나가기 버튼을 눌렀을 때 실행되는 함수입니다.
 	function ministry_out(){
-		//나가기 버튼을 눌렀을 때
 
 		if (!confirm("나가시겠습니까?")){
 			return;
@@ -570,6 +569,7 @@ if ($c_map_list_enter=="Y"){
 
 	}
 
+// 봉사 이력을 보기 위한 함수입니다.
 	function map_list_record(map_sub_idx){
 
 		$("#ministry_list_record_detail").html("");
@@ -587,6 +587,7 @@ if ($c_map_list_enter=="Y"){
         $("#myModalRecord").modal();
 	}
 
+// 봉사 이력의 세부 내용을 보기 위한 함수입니다.
 	function map_list_record_detail(map_sub_idx){
 
 		$("#map_list_date").change(function (){
@@ -625,116 +626,96 @@ if ($c_map_list_enter=="Y"){
 </script>
 
 
-  <!-- Modal -->
-  <div class="modal" id="myModalMap" role="dialog">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title">지도</h4>
-        </div>
-        <div class="modal-body">
-		<iframe id="map_iframe" src="" width="100%" height="500"></iframe>
-        </div>
-        <!-- <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
-        </div> -->
-      </div>
-    </div>
-  </div>
-
-
-
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModalInfo" role="dialog">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title2">정보</h4>
-
-			  <div class="form-group row">
-				<div class="text-left col-sm-9 col-xs-8">
-				  <input type="text" id="map_list_road" class="form-control" placeholder="길이름">
-				  <input type="text" id="map_list_road_no" class="form-control" placeholder="지번">
-				  <input type="text" id="map_list_floor" class="form-control" placeholder="층">
-				  <input type="text" id="map_list_info" class="form-control" placeholder="이름/호">
-				  <select id="house_idx" class="form-control">
-				  <?
-					$sql="select house_idx, house_type from db_house_type";
-					$result_type=mysql_query($sql);
-					while($rs=mysql_fetch_array($result_type)){
-						$house_idx=$rs[house_idx];
-						$house_type=$rs[house_type];
-						echo "<option value='".$house_idx."'>".$house_type."</option>";
-					}
-				  ?>
-				  </select>
-				</div>
-				<div class="text-right col-sm-3 col-xs-4">
-				  <button type="button" class="btn btn-success btn-sm" data-dismiss="modal" onclick="map_info_edit();"><span class="glyphicon glyphicon-edit"></span> 수정</button>	
-				</div>
-			  </div>
-        </div>
-        <div class="modal-body">
-			<form role="form">
-			  <strong>봉사기록</strong> - 봉사를 하면서 있었던 특이사항을 기록하세요.
-			  <div class="form-group">
-				  <input type="hidden" name="map_list_idx" id="map_list_idx">
-				  <textarea id="map_content_content" rows="4" cols="" class="form-control"></textarea>
-			  </div>
-			</form>	
-			<div class="text-right">
-				<button type="button" class="btn btn-success btn-sm " data-dismiss="modal" onclick="map_info_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>	
+<!-- 모달 창 -->
+<div class="modal" id="myModalMap" role="dialog">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title" id="modal-title">지도</h4>
 			</div>
+			<div class="modal-body">
+				<iframe id="map_iframe" src="" width="100%" height="500"></iframe>
+			</div>
+		</div>
+	</div>
+</div>
 
-			  <div class="">
-				  <div id="map_content_list" style="height:100px;overflow-y:auto;"></div>
-			  </div>
+<!-- 가구 정보 수정 모달 -->
+<div class="modal fade" id="myModalInfo" role="dialog">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title" id="modal-title2">정보</h4>
+
+				<div class="form-group row">
+					<div class="text-left col-sm-9 col-xs-8">
+						<input type="text" id="map_list_road" class="form-control" placeholder="길이름">
+						<input type="text" id="map_list_road_no" class="form-control" placeholder="지번">
+						<input type="text" id="map_list_floor" class="form-control" placeholder="층">
+						<input type="text" id="map_list_info" class="form-control" placeholder="이름/호">
+						<select id="house_idx" class="form-control">
+							<?
+							$sql="select house_idx, house_type from db_house_type";
+							$result_type=mysql_query($sql);
+							while($rs=mysql_fetch_array($result_type)){
+								$house_idx=$rs[house_idx];
+								$house_type=$rs[house_type];
+								echo "<option value='".$house_idx."'>".$house_type."</option>";
+							}
+							?>
+						</select>
+					</div>
+					<div class="text-right col-sm-3 col-xs-4">
+						<button type="button" class="btn btn-success btn-sm" data-dismiss="modal" onclick="map_info_edit();"><span class="glyphicon glyphicon-edit"></span> 수정</button>	
+					</div>
+				</div>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+					<strong>봉사기록</strong> - 봉사를 하면서 있었던 특이사항을 기록하세요.
+					<div class="form-group">
+						<input type="hidden" name="map_list_idx" id="map_list_idx">
+						<textarea id="map_content_content" rows="4" cols="" class="form-control"></textarea>
+					</div>
+				</form>	
+				<div class="text-right">
+					<button type="button" class="btn btn-success btn-sm " data-dismiss="modal" onclick="map_info_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>	
+				</div>
+
+				<div class="">
+					<div id="map_content_list" style="height:100px;overflow-y:auto;"></div>
+				</div>
 				
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
+			</div>
+		</div>
+	</div>
+</div>
 
-
-
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModalRecord" role="dialog">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title3">봉사이력보기</h4>
-        </div>
-        <div class="modal-body">
-			<div>이 구역의 이전 봉사 이력을 확인할 수 있습니다.</div>
-			<div id="ministry_list_record"></div>
-			<div id="ministry_list_record_detail" style="height:300px;overflow-y:auto;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-  <script type="text/javascript">
-  <!--
-
-  $(".footer").css("display","none");
-
-  //-->
-  </script>
-
-
+<!-- 봉사 이력 보기 모달 -->
+<div class="modal fade" id="myModalRecord" role="dialog">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title" id="modal-title3">봉사이력보기</h4>
+			</div>
+			<div class="modal-body">
+				<div>이 구역의 이전 봉사 이력을 확인할 수 있습니다.</div>
+				<div id="ministry_list_record"></div>
+				<div id="ministry_list_record_detail" style="height:300px;overflow-y:auto;"></div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=<?=DAUM_MAP_API ?>&libraries=services"></script>
 <script>
+// 지도 초기 설정
 var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
     mapOption = {
         center: new daum.maps.LatLng(37.000922, 127.195686), // 지도의 중심좌표
@@ -754,14 +735,13 @@ var imageSrc = "http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerSt
 var mapTypeControl = new daum.maps.MapTypeControl();
 
 // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
-// daum.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
 map.addControl(mapTypeControl, daum.maps.ControlPosition.TOPRIGHT);
 
 // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
 var zoomControl = new daum.maps.ZoomControl();
 map.addControl(zoomControl, daum.maps.ControlPosition.RIGHT);
 
-
+// 마커 설정 함수
 function set_marker(num, addr, info){
 
 	geocoder.addressSearch(addr, function(result, status) {
@@ -770,7 +750,6 @@ function set_marker(num, addr, info){
 		 if (status === daum.maps.services.Status.OK) {
 
 			var coords = new daum.maps.LatLng(result[0].y, result[0].x);
-
 
 			// 마커 이미지의 이미지 크기 입니다
 			var imageSize = new daum.maps.Size(24, 35); 
@@ -796,13 +775,11 @@ function set_marker(num, addr, info){
 
 			iwRemoveable = true; // removeable 속성을 ture 로 설정하면 인포윈도우를 닫을 수 있는 x버튼이 표시됩니다
 
-
 			// 인포윈도우로 장소에 대한 설명을 표시합니다
 			var infowindow = new daum.maps.InfoWindow({
 				content: '<div style="width:150px;text-align:center;padding:15px 7px;font-size:14px;">'+info+'</div>',
 				removable : iwRemoveable
 			});
-//			infowindow.open(map, marker);
 
 			// 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
 			if (num==1) {
@@ -814,6 +791,7 @@ function set_marker(num, addr, info){
 }
 
 <?
+	// 구역 내 각 가구에 대해 마커를 설정합니다.
 	$sql2="select *	from map_normal_list a where map_sub_idx='$req_map_sub_idx' ";
 	$result2=mysql_query($sql2);
 
@@ -837,9 +815,7 @@ function set_marker(num, addr, info){
 	}
 ?>
 
-
-
-// 지도에 다각형을 표시한다 
+// 지도에 다각형을 표시합니다.
 var polygon = new daum.maps.Polygon({
 	map : map, // 다각형을 표시할 지도 객체
 	path:[<?=$bbb ?>],
@@ -851,7 +827,7 @@ var polygon = new daum.maps.Polygon({
 	strokeStyle: 'solid' // 선 스타일
 });
 
-
+// 지도보기/닫기 버튼의 텍스트를 업데이트합니다.
 $("#btn-map").click(function (){
 	var btn_text = ($(".collapse").hasClass("in")==true)?"지도보기":"지도닫기";
 	$("#btn-map").text(btn_text);

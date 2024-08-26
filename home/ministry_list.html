@@ -1,114 +1,111 @@
+```php
 <?
-include "../include/db_connect.php";
-include "../include/function.php";
+include "../include/db_connect.php"; // 데이터베이스 연결 파일을 포함합니다.
+include "../include/function.php"; // 함수 파일을 포함합니다.
 
-session_check();
+session_check(); // 세션이 유효한지 확인합니다.
 
 
-$req_map_sub_idx=$_REQUEST["map_sub_idx"];
-$req_service_idx=$_REQUEST["service_idx"];
-$req_month_date=$_REQUEST["month_date"];
+$req_map_sub_idx=$_REQUEST["map_sub_idx"]; // 요청된 구역 인덱스를 가져옵니다.
+$req_service_idx=$_REQUEST["service_idx"]; // 요청된 서비스 인덱스를 가져옵니다.
+$req_month_date=$_REQUEST["month_date"]; // 요청된 날짜를 가져옵니다.
 
-//봉사형태값이 올바른지 확인(숫자만 가능)
+// 봉사형태 값이 올바른지 확인합니다 (숫자만 가능).
 if (!is_numeric($req_service_idx)){
-	echo "<script type='text/javascript'>location.href='/home/';</script>";
+	echo "<script type='text/javascript'>location.href='/home/';</script>"; // 잘못된 값이면 홈으로 리다이렉션.
 	exit;
 }
 
-//날짜형식이 올바른지 확인
+// 날짜 형식이 올바른지 확인합니다.
 if (!chkdate($req_month_date)){
-	echo "<script type='text/javascript'>location.href='/home/';</script>";
+	echo "<script type='text/javascript'>location.href='/home/';</script>"; // 잘못된 값이면 홈으로 리다이렉션.
 	exit;	
 }
 
 if ($req_map_sub_idx=="" || $req_map_sub_idx==null){
-	echo "<script type='text/javascript'>location.href='/home/';</script>";
+	echo "<script type='text/javascript'>location.href='/home/';</script>"; // 인덱스 값이 없으면 홈으로 리다이렉션.
 	exit;
 }
 
 if (!is_numeric($req_map_sub_idx)){
-	echo "<script type='text/javascript'>location.href='/home/';</script>";
+	echo "<script type='text/javascript'>location.href='/home/';</script>"; // 인덱스 값이 숫자가 아니면 홈으로 리다이렉션.
 	exit;
 }
 
-	
-	//올바른 map_sub_idx 값인지 확인
-	$sql="select * from ministry_list where map_sub_idx='$req_map_sub_idx'";
-	$result_type=mysql_query($sql);
-	if (!$result_type){
-	 echo "<script type='text/javascript'>location.href='/home/?e=result_type&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
+// 올바른 map_sub_idx 값인지 확인합니다.
+$sql="select * from ministry_list where map_sub_idx='$req_map_sub_idx'";
+$result_type=mysql_query($sql);
+if (!$result_type){
+	 echo "<script type='text/javascript'>location.href='/home/?e=result_type&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>"; // 결과가 없으면 홈으로 리다이렉션.
+}
+$num_rows = mysql_num_rows($result_type);
+
+if ($num_rows==0){
+	 echo "<script type='text/javascript'>location.href='/home/?e=num_rows&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>"; // 결과가 없으면 홈으로 리다이렉션.
+}
+
+$rs=mysql_fetch_array($result_type);
+$map_sub_idx = $rs[map_sub_idx];
+$ministry_date = $rs[ministry_date];
+$ministry_start_date = $rs[ministry_start_date];
+$ministry_member_idx = $rs[ministry_member_idx];
+$c_map_list_house_idx = $rs["map_list_house_idx"]; // 조건: 가구 형태.
+$c_map_list_visit = $rs["map_list_visit"]; // 조건: 부재자.
+$c_map_list_enter = $rs["map_list_enter"]; // 조건: 방문 거절, 방문 금지.
+
+if ($map_sub_idx != $req_map_sub_idx){
+	echo "<script>
+		alert('sub idx value error!!');
+		location.href='/home/';
+		</script>"; // 인덱스 값이 일치하지 않으면 오류를 알리고 홈으로 리다이렉션.
+	exit;		
+}
+
+if ($ministry_date != $req_month_date){
+	echo "<script>
+		alert('date value error!!');
+		location.href='/home/';
+		</script>"; // 날짜 값이 일치하지 않으면 오류를 알리고 홈으로 리다이렉션.
+	exit;
+}
+
+// 사용자가 참여 중인지 확인합니다.
+$m_idx=$_SESSION['m_idx'];
+$arr_m_m_cnt=0;
+if ($ministry_member_idx != "" && $ministry_member_idx != null){
+	$arr_m_m_idx=explode(",",$ministry_member_idx);
+	$arr_m_m_cnt=count($arr_m_m_idx);
+}else{
+	echo "<script>
+		alert('error!!');
+		location.href='/home/';
+		</script>"; // 참여자가 없으면 오류를 알리고 홈으로 리다이렉션.
+	exit;
+}
+
+$is_member=false;
+for ($i=0;$i<$arr_m_m_cnt;$i++){
+	if ($arr_m_m_idx[$i]==$m_idx){
+		$is_member=true;
+		break; // 사용자가 참여 중인지 확인합니다.
 	}
-	$num_rows = mysql_num_rows($result_type);
+}
 
-	if ($num_rows==0){
-	 echo "<script type='text/javascript'>location.href='/home/?e=num_rows&service_idx=".$req_service_idx."&month_date=".$req_month_date."';</script>";
-	}
+if (!$is_member){
+	echo "<script>
+		alert('error!!');
+		location.href='/home/';
+		</script>"; // 사용자가 참여자가 아니라면 오류를 알리고 홈으로 리다이렉션.
+	exit;
+}
 
-	$rs=mysql_fetch_array($result_type);
-	$map_sub_idx = $rs[map_sub_idx];
-	$ministry_date = $rs[ministry_date];
-	$ministry_start_date = $rs[ministry_start_date];
-	$ministry_member_idx = $rs[ministry_member_idx];
-	$c_map_list_house_idx = $rs["map_list_house_idx"];		//조건 : 가구형태
-	$c_map_list_visit = $rs["map_list_visit"];				//조건 : 부재자
-	$c_map_list_enter = $rs["map_list_enter"];				//조건 : 방문거절, 방문금지
-
-
-	if ($map_sub_idx != $req_map_sub_idx){
-		echo "<script>
-			alert('sub idx value error!!');
-			location.href='/home/';
-			</script>";
-		exit;		
-	}
-
-	if ($ministry_date != $req_month_date){
-		echo "<script>
-			alert('date value error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-	//참여중인지 여부확인
-	$m_idx=$_SESSION['m_idx'];
-	$arr_m_m_cnt=0;
-	if ($ministry_member_idx != "" && $ministry_member_idx != null){
-		$arr_m_m_idx=explode(",",$ministry_member_idx);
-		$arr_m_m_cnt=count($arr_m_m_idx);
-	}else{
-		echo "<script>
-			alert('error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-	$is_member=false;
-	for ($i=0;$i<$arr_m_m_cnt;$i++){
-		if ($arr_m_m_idx[$i]==$m_idx){
-			$is_member=true;
-			break;
-		}
-	}
-
-	if (!$is_member){
-		echo "<script>
-			alert('error!!');
-			location.href='/home/';
-			</script>";
-		exit;
-	}
-
-
-
-	//시작일자를 등록
-	//시작일자 값이 없으면 등록을 한다.
-	if ($ministry_start_date == "" || $ministry_start_date == null){
-		$ministry_start_date_isnull="Y";
-	}else{
-		$ministry_start_date_isnull="N";
-	}
+// 시작일자를 등록합니다.
+// 시작일자 값이 없으면 등록합니다.
+if ($ministry_start_date == "" || $ministry_start_date == null){
+	$ministry_start_date_isnull="Y";
+}else{
+	$ministry_start_date_isnull="N";
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
@@ -118,27 +115,19 @@ if (!is_numeric($req_map_sub_idx)){
 <body> 
 
     <!-- Fixed navbar -->
-    <!-- <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-          <a class="navbar-brand" href="/service/"><img src="/img/icon-home.png"></a>
-          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
-		  <div class="navpress">
-			  <a href="#"><strong>홈</strong></a>
-		  </div>
-      </div>
-    </nav> -->
+    <!-- 고정된 네비게이션 바 (주석 처리됨) -->
 
     <div class="page-home">
       <div class="container">	  
 
 		<?
-		//봉사안내 기본메세지
+		// 봉사 안내 기본 메세지.
 		$sql1="select * from site_option where option_idx=5";
 		$result1=mysql_query($sql1);
 		$rs1=mysql_fetch_array($result1);
-		$ministry_notice=$rs1[option_fullname];
+		$ministry_notice=$rs1[option_fullname]; // 봉사 안내 메세지를 가져옵니다.
 
-
+		// 구역 정보를 가져옵니다.
 		$sql="SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
 		$result_type=mysql_query($sql);
 		$rs=mysql_fetch_array($result_type);
@@ -150,12 +139,12 @@ if (!is_numeric($req_map_sub_idx)){
 		$map_sub_notice=$rs[map_sub_notice];
 		$bbb="";
 
-		//구역카드에 메세지가 없으면 기본메세지를 보여준다.
+		// 구역 카드에 메세지가 없으면 기본 메세지를 보여줍니다.
 		if ($map_sub_notice==""){
 			$map_sub_notice = $ministry_notice;
 		}
 
-
+		// 다각형 폴리곤 정보를 처리합니다.
 		if ($map_sub_polygon!=""){
 		$chars = explode ("),(", $map_sub_polygon);
 
@@ -284,7 +273,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_list(map_sub_idx){
-		//가구 리스트		
+		// 가구 리스트를 불러옵니다.
 
 		$.ajax({
 			type: "post",
@@ -329,7 +318,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_view(map_sub_no, map_sub_idx, map_sub_info, map_sub_addr){
-		//구역지도 확인
+		// 구역 지도를 확인합니다.
 
 		var h=$(window).height()-150;
 
@@ -345,7 +334,7 @@ if ($c_map_list_enter=="Y"){
 
 
 	function map_info_edit(){
-		//가구정보수정
+		// 가구 정보를 수정합니다.
 
 		var map_list_idx = $("#map_list_idx").val();
 		var map_list_road = $("#map_list_road").val();
@@ -367,7 +356,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_info_view_del(map_content_idx){
-		//봉사기록삭제
+		// 봉사 기록을 삭제합니다.
 
 		$.ajax({
 			type: "post",
@@ -383,7 +372,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_info_view(map_list_idx, map_list_road, map_list_road_no, map_list_floor, map_list_info, map_list_house_idx){
-		//봉사기록보기
+		// 봉사 기록을 확인합니다.
 
 		map_info = map_list_road+" "+map_list_road_no+" "+map_list_floor+" "+map_list_info;
 
@@ -408,7 +397,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_info_save() {
-		//봉사기록저장
+		// 봉사 기록을 저장합니다.
 
 		var map_list_idx = $("#map_list_idx").val();
 		var map_content_content = $("#map_content_content").val();
@@ -425,7 +414,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_list_visit_Y(map_sub_idx, map_list_idx){
-		//방문 항목 체크
+		// 방문 항목을 체크합니다.
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var visit_N=$("#map_list_visit_N_"+map_list_idx);
@@ -444,7 +433,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_list_visit_N(map_sub_idx, map_list_idx){
-		//부재자 항목 체크
+		// 부재자 항목을 체크합니다.
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var visit_N=$("#map_list_visit_N_"+map_list_idx);
@@ -463,7 +452,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_list_enter_Y(map_sub_idx, map_list_idx){
-		//방문 거절 항목 체크
+		// 방문 거절 항목을 체크합니다.
 
 		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
 		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
@@ -500,7 +489,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function map_list_enter_N(map_sub_idx, map_list_idx){
-		//방문 금지 항목 체크
+		// 방문 금지 항목을 체크합니다.
 
 		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
 		var enter_N=$("#map_list_enter_N_"+map_list_idx);
@@ -542,7 +531,7 @@ if ($c_map_list_enter=="Y"){
 	}
 
 	function ministry_complete(){
-		//저장 버튼을 눌렀을 때
+		// 저장 버튼을 눌렀을 때.
 
 		var service_idx="<?=$req_service_idx ?>";
 		var month_date="<?=$req_month_date ?>";
@@ -568,7 +557,7 @@ if ($c_map_list_enter=="Y"){
 
 	}
 	function ministry_out(){
-		//나가기 버튼을 눌렀을 때
+		// 나가기 버튼을 눌렀을 때.
 
 		if (!confirm("나가시겠습니까?")){
 			return;
@@ -694,7 +683,6 @@ if ($c_map_list_enter=="Y"){
 				var NN = $(this).prop("checked");
 				var YY = $(".map_list_visit_Y").eq(index).prop("checked");
 
-//					if (NN==false && YY==false || NN==true && YY==false){
 					if (NN==false && YY==false){
 						$(this).prop("checked",true);
 						map_list_update(map_sub_idx, MAP_LIST_IDX, "map_list_visit", "N");
@@ -817,7 +805,7 @@ if ($c_map_list_enter=="Y"){
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <button type="button" class="close" data-dismiss="modal">&times;"></button>
           <h4 class="modal-title" id="modal-title3">봉사이력보기</h4>
         </div>
         <div class="modal-body">

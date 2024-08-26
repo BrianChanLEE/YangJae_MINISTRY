@@ -1,616 +1,99 @@
-<?
+<?php
+// 데이터베이스 연결 및 필수 함수 포함
 include "../include/db_connect.php";
 include "../include/function.php";
 
+// 세션 확인 (사용자가 로그인했는지 확인)
 session_check();
 
+// 요청된 날짜와 서비스 인덱스를 변수에 저장
+$req_month_date = $_REQUEST["month_date"];
+$req_service_idx = $_REQUEST["service_idx"];
 
-$req_month_date=$_REQUEST["month_date"];
-$req_service_idx=$_REQUEST["service_idx"];
-
-
-//if (!$req_service_idx || $req_service_idx < 0){
-//  $req_service_idx=1;	//값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 1으로 처리
-//}
-
-//봉사형태값이 올바른지 확인(숫자만 가능)
-if ($req_service_idx!=""){
-	if (!is_numeric($req_service_idx)){
-		echo "<script type='text/javascript'>location.href='/home/';</script>";
-		exit;
-	}
+// 봉사형태값이 올바른지 확인 (숫자만 가능하도록)
+if ($req_service_idx != "") {
+    if (!is_numeric($req_service_idx)) {
+        // 봉사형태값이 숫자가 아닐 경우, 홈 페이지로 리다이렉트
+        echo "<script type='text/javascript'>location.href='/home/';</script>";
+        exit;
+    }
 }
 
-
-if (!$req_month_date || $req_month_date < 0){
-  $req_month_date=date("Y-m-d");	//값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 오늘날짜(으)로 처리
+// 날짜가 유효하지 않거나 음수일 경우, 오늘 날짜로 설정
+if (!$req_month_date || $req_month_date < 0) {
+    $req_month_date = date("Y-m-d");  // 오늘 날짜로 설정
 }
 
-//날짜형식이 올바른지 확인
-if (!chkdate($req_month_date)){
-	echo "<script type='text/javascript'>location.href='/home/';</script>";
-	exit;	
+// 날짜 형식이 올바른지 확인 (잘못된 날짜일 경우, 홈 페이지로 리다이렉트)
+if (!chkdate($req_month_date)) {
+    echo "<script type='text/javascript'>location.href='/home/';</script>";
+    exit;
 }
 
+// 요일 배열을 정의 (일요일부터 시작)
+$yoil = array("7", "1", "2", "3", "4", "5", "6");
 
-
-
-$yoil = array("7","1","2","3","4","5","6");
- 
+// 요청된 날짜의 요일을 계산하여 $week_yoil 변수에 저장
 $week_yoil = $yoil[date('w', strtotime($req_month_date))];
 
+// 관리자 권한을 가진 사용자인지 확인 (1, 2, 3번 권한 확인)
+if (mgr_check("1,2,3")) {
 
+    // 오늘 날짜를 $today 변수에 저장
+    $today = date("Y-m-d");
 
-//이전 날짜에 대한 봉사 참여자들의 기록은 모두 삭제한다.
-//빠져나오지 않은 전도인들을 삭제하는 기능.
+    // 어제 날짜를 $yesterday 변수에 저장
+    $yy = date("Y", time());
+    $mm = date("m", time());
+    $dd = date("d", time()) - 1;
+    $yesterday = date("Y-m-d", mktime(0, 0, 0, $mm, $dd, $yy));
 
-if (mgr_check("1,2,3")){
-	
-	//오늘날짜
-	$today=date("Y-m-d"); 
+    // 같은 날에 중복 작업을 방지하기 위해 작업 리스트를 확인
+    $sql = "SELECT * FROM work_list WHERE work_date='$today'";
+    $result = mysql_query($sql);
+    $num = mysql_num_rows($result);
 
-	//어제날짜
-	$yy=date("Y", time());
-	$mm=date("m", time());
-	$dd=date("d", time())-1;
-	$yesterday=date("Y-m-d", mktime(0,0,0, $mm, $dd, $yy));
+    // 작업 리스트에 오늘 날짜가 없다면 작업 수행
+    if ($num == 0) {
 
+        // 30일 이전의 작업 내역 삭제
+        $sql = "DELETE FROM work_list WHERE work_date < date_add(now(), interval -30 day)";
+        $result = mysql_query($sql);
 
-	// A~C작업에 대해 하루에 1회만 하도록 하는 부분.
-	$sql="select * from work_list where work_date='$today'";
-	$result=mysql_query($sql);
-	$num=mysql_num_rows($result);
+        // 현재 작업을 기록 (작업한 날짜와 시간, 작업한 사람을 기록)
+        $m_name = $_SESSION['m_name'];
+        $sql = "INSERT INTO work_list(work_date, work_datetime, work_member) VALUES ('$today', now(), '$m_name')";
+        $result = mysql_query($sql);
 
-	if ($num>0){
-	}else{
+        // A 작업: 30일 이전의 로그인 기록 삭제
+        $sql = "DELETE FROM member_login_log WHERE login_date < date_add(now(), interval -30 day)";
+        $result = mysql_query($sql);
 
-			//30일이전 내역은 삭제.
-			$sql="delete from work_list where work_date < date_add(now(), interval -30 day) ";
-			$result=mysql_query($sql);
-			
-			//작업한 기록을 저장.
-			$m_name=$_SESSION['m_name'];
-			$sql="insert into work_list(work_date, work_datetime, work_member) value('$today', now(), '$m_name')";
-			$result=mysql_query($sql);
+        // B 작업: 하루가 지난 전도인들을 삭제
+        $sql = "UPDATE ministry_list SET ministry_member_idx='' WHERE ministry_date < '$today'";
+        $result = mysql_query($sql);
 
-			// A작업. 
-			//30일이전 로그인기록은 삭제
-			$sql="delete from member_login_log where login_date < date_add(now(), interval -30 day) ";
-			$result=mysql_query($sql);
+        // C 작업: 하루가 지난 후 완료된 구역에 대해 봉사 항목들을 실제 저장 필드로 복사
+        $sql = "UPDATE map_normal_list SET 
+                    map_list_visit=map_list_visit_c, 
+                    map_list_enter=map_list_enter_c 
+                WHERE map_sub_idx IN (
+                    SELECT map_sub_idx FROM ministry_list 
+                    WHERE ministry_date < '$today' 
+                    AND ministry_start_date IS NOT NULL 
+                    AND ministry_end_date IS NULL
+                    AND ministry_ing_cnt=0
+                )";
+        $result = mysql_query($sql);
 
-			// B작업. 
-			//하루가 지난 전도인들을 삭제.
-			$sql="update ministry_list set ministry_member_idx='' where ministry_date < '$today' ";
-			$result=mysql_query($sql);
-			//echo $sql;
-
-			// C작업.
-			//하루가 지난후 완료된 구역에 대해 봉사를 완료했지만 종료일자가 없을경우
-			//봉사하면서 체크한 항목들을 실제저장 필드로 복사
-			//map_list_visit_c(임시공간) -> map_list_visit 으로 복사
-			//map_list_enter_c(임시공간) -> map_list_enter 으로 복사
-			$sql="update map_normal_list set 
-							map_list_visit=map_list_visit_c, 
-							map_list_enter=map_list_enter_c 
-					where	map_sub_idx in (
-								select map_sub_idx from ministry_list 
-									where   ministry_date < '$today' 
-										AND ministry_start_date IS NOT NULL 
-										AND ministry_end_date IS NULL
-										AND ministry_ing_cnt=0
-								) ";
-
-			$result=mysql_query($sql);
-			//echo $sql;
-
-
-			//하루가 지난후 완료된 구역에 대해 봉사를 완료했지만 종료일자가 없을경우 종료일자를 기록.
-			//시작일이 있고, 종료일은 없으나, 남은구역이 0인경우 봉사를 완료한것이므로 종료일을 저장한다.
-			$sql="update ministry_list set 
-							ministry_end_date='$yesterday'
-					where   ministry_date < '$today' 
-						AND ministry_start_date IS NOT NULL 
-						AND ministry_end_date IS NULL 
-						AND ministry_ing_cnt=0";
-			$result=mysql_query($sql);
-			//echo $sql;
-
-	}
-
+        // 완료된 구역에 대해 종료일자를 기록 (남은 구역이 없을 경우)
+        $sql = "UPDATE ministry_list SET 
+                    ministry_end_date='$yesterday'
+                WHERE ministry_date < '$today' 
+                AND ministry_start_date IS NOT NULL 
+                AND ministry_end_date IS NULL 
+                AND ministry_ing_cnt=0";
+        $result = mysql_query($sql);
+    }
 }
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
-<head>
-<?include "../include/head.html";?>
-<style type="text/css">
-	.ui-datepicker{
-		width:100%;
-	}
-
-	.ui-datepicker th{
-		font-size:12px;
-
-	}
-	.ui-datepicker td a{
-		font-size:12px;
-	}
-</style>
-</head>
-<body> 
-
-    <!-- Fixed navbar -->
-    <!-- <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-          <a class="navbar-brand" href="/service/"><img src="/img/icon-home.png"></a>
-          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
-		  <div class="navpress">
-			  <a href="#"><strong>홈</strong></a>
-		  </div>
-      </div>
-    </nav> -->
-
-    <div class="page-home">
-      <div class="container">	  
-
-		<div class="row marginbottom10">
-			<div id="datepicker" class="datepicker ll-skin-jw-ministry"></div>
-		</div>
-		<form name="form1" method="post" action="">
-			<input type="hidden" name="month_date" id="month_date" value="<?=$req_month_date ?>">
-			<input type="hidden" name="service_idx" id="service_idx" value="<?=$req_service_idx ?>">
-		</form>
-
-<?
-//봉사시간, 모임장소, 인도자 등등
-//추가계획이 있을경우 추가계획을 표시
-//          없을경우 기본계획을 표시
-
-$sql="SELECT * FROM month_list WHERE month_date='$req_month_date' ";
-//echo $sql;
-$result=mysql_query($sql);
-$num=mysql_num_rows($result);
-
-if ($num>0){
-	$T1="(SELECT month_service as svc, count(month_service) as svc_cnt, month_time as svc_time FROM month_list where month_service>0 and month_date='$req_month_date' group by month_service ) b ";
-}else{
-	$T1="(SELECT week_service as svc, count(week_service) as svc_cnt, week_time as svc_time FROM week_list where week_service>0 and week_yoil='$week_yoil' group by week_service ) b ";
-}
-?>
-
-		<div class="row marginbottom10">
-			<?if (mgr_check("5")){?>
-			<button class="btn btn-success btn-sm pull-right" onclick="ministry_record()"><span class="glyphicon glyphicon-pencil"></span> 인원보고</button>
-			<?}?>
-
-			<ul class="nav nav-sm nav-pills">
-<?
-	//봉사형태
-	$sql="
-	select * from (
-		SELECT * FROM db_service_type a left join $T1 on a.service_idx=b.svc ORDER BY svc_time
-	) T where svc_cnt is not null";
-	// echo $sql;
-
-	$sql_service_type=$sql;
-
-
-	//----------------------------------------
-	//봉사형태. 요일별로 봉사가 있는 것이 나오도록 하는 것.
-	$result=mysql_query($sql);
-	$rs=mysql_fetch_array($result);
-	$tmp_service_idx = $rs[service_idx];
-
-	if ($req_service_idx==""){
-		$req_service_idx = $tmp_service_idx;
-	}
-	//----------------------------------------
-
-	$result=mysql_query($sql);
-	while($rs=mysql_fetch_array($result)){
-		$service_idx	=$rs[service_idx];
-		$service_type	=$rs[service_type];
-		$service_cnt	=$rs[svc_cnt];
-	?>
-				<li<?=($service_idx==$req_service_idx)?" class=\"active\"":"" ?>><a href="?service_idx=<?=$service_idx ?>&month_date=<?=$req_month_date ?>"><?=$service_type ?> <span class="badge"><?=$service_cnt ?></span> </a></li>
-	<?
-	}
-?>
-			</ul>
-		</div>
-<?
-if ($num>0){
-
-	$sql2="SELECT 
-		'month' as week_TYPE,
-		case when month_ampm='m' then '오전'
-			 when month_ampm='a' then '오후'
-			 when month_ampm='e' then '저녁' end as week_AP,
-		(month_time) as week_time,
-		(select m_name from member where m_idx=a.month_guide1) as week_G1,
-		(select m_name from member where m_idx=a.month_guide2) as week_G2,
-		(select m_hp from member where m_idx=a.month_guide1) as week_G1_HP,
-		(select m_hp from member where m_idx=a.month_guide2) as week_G2_HP,
-		month_service as week_service,
-		(select service_type from db_service_type where service_idx=a.month_service) as week_SV,
-		(select meeting_name from meeting_location where meeting_idx=a.month_location) as week_LO,
-		(select meeting_addr from meeting_location where meeting_idx=a.month_location) as week_AD,
-		month_content as week_content
-
-		 FROM month_list a WHERE month_date='$req_month_date' and month_service='$req_service_idx'
-		 ORDER BY month_time";
-
-}else{
-
-	$sql2="SELECT 
-		'week' as week_TYPE,
-		case when week_ampm='m' then '오전'
-			 when week_ampm='a' then '오후'
-			 when week_ampm='e' then '저녁' end as week_AP,
-		week_time,
-		(select m_name from member where m_idx=a.week_guide1) as week_G1,
-		(select m_name from member where m_idx=a.week_guide2) as week_G2,
-		(select m_hp from member where m_idx=a.week_guide1) as week_G1_HP,
-		(select m_hp from member where m_idx=a.week_guide2) as week_G2_HP,
-		week_service,
-		(select service_type from db_service_type where service_idx=a.week_service) as week_SV,
-		(select meeting_name from meeting_location where meeting_idx=a.week_location) as week_LO,
-		(select meeting_addr from meeting_location where meeting_idx=a.week_location) as week_AD,
-		'' as week_content
-
-		 FROM week_list a WHERE week_yoil='$week_yoil' and week_service='$req_service_idx'
-		 ORDER BY week_time";
-}
-// echo $sql2;
-	$result2=mysql_query($sql2);
-	while($rs=mysql_fetch_array($result2)){
-		$week_TYPE=$rs[week_TYPE];
-		$week_AP=$rs[week_AP];
-		$week_time=$rs[week_time];
-		$week_G1=$rs[week_G1];
-		$week_G2=$rs[week_G2];
-		$week_G1_HP=$rs[week_G1_HP];
-		$week_G2_HP=$rs[week_G2_HP];
-		$week_service=$rs[week_service];
-		$week_SV=$rs[week_SV];
-		$week_LO=$rs[week_LO];
-		$week_AD=$rs[week_AD];
-
-		$week_G1_HP_1=substr($week_G1_HP, 0,3);
-		$week_G1_HP_2=substr($week_G1_HP, 3,4);
-		$week_G1_HP_3=substr($week_G1_HP, 7,4);
-		$week_G1_HP=$week_G1_HP_1."-".$week_G1_HP_2."-".$week_G1_HP_3;
-
-		$week_G2_HP_1=substr($week_G2_HP, 0,3);
-		$week_G2_HP_2=substr($week_G2_HP, 3,4);
-		$week_G2_HP_3=substr($week_G2_HP, 7,4);
-		$week_G2_HP=$week_G2_HP_1."-".$week_G2_HP_2."-".$week_G2_HP_3;
-
-		$week_content=$rs[week_content];
-
-		if (!($week_TYPE=="month" && $week_service == 2)){
-?>
-      <div class="row alert alert-success fontsize12">
-		  <strong>모임시간 : </strong><?=$week_AP ?> <?=$week_time ?> <br>
-		  <strong>모임장소 : </strong><?=$week_LO ?> (<?=$week_AD ?>) <a href="javascript:;" onclick="map_view('<?=$week_LO ?>', '<?=$week_AD ?>')" class="btn btn-xs btn-success">지도</a>  <br>
-		  <?if ($week_service!=7){?>
-			  <strong>인도자 : </strong><?=$week_G1 ?> <?=$week_G1_HP ?> <a href="tel:<?=$week_G1_HP ?>" class="btn btn-xs btn-success">전화</a><br>
-			  <?if ($week_G2!=""){?>
-			  <strong>보조자 : </strong><?=$week_G2 ?> <?=$week_G2_HP ?> <a href="tel:<?=$week_G2_HP ?>" class="btn btn-xs btn-success">전화</a>
-			  <?}?>
-		  <?}?>
-		  <?if ($week_service==7){?>
-		  <strong>기타사항 : </strong><?=$week_content ?>
-		  <?}?>
-	  </div>
-<?
-		}
-	}
-?>
-		
-		<div class="row marginbottom50">
-			<div id="main_list"></div>
-		</div>
-
-      </div>
-    </div>
-
-<?include "../include/footer.html";?>
-
-</body>
-</html>
-<script src="/bootstrap/js/bootstrap.min.js"></script>
-<script>
-	$( "#datepicker" ).datepicker({
-
-		dateFormat: 'yy-mm-dd',
-		prevText: '이전 달',
-		nextText: '다음 달',
-		monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
-		monthNamesShort: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
-		dayNames: ['일','월','화','수','목','금','토'],
-		dayNamesShort: ['일','월','화','수','목','금','토'],
-		dayNamesMin: ['일','월','화','수','목','금','토'],
-		showMonthAfterYear: true,
-	//    changeMonth: true,
-	//    changeYear: true,
-		yearSuffix: '년',
-
-
-	});
-
-	$('#datepicker').on('change', function() {
-		location.href="?month_date="+$('#datepicker').val();
-	});
-	$('#datepicker').datepicker('setDate', "<?=$req_month_date ?>");
-
-//dddd
-
-	main_list();
-
-	<?//if (mgr_check("1,2,3")){?>
-	var ministry_recycle_second="<?=MINISTRY_RECYCLE_SECOND ?>";
-	setInterval(function(){ main_list(); }, ministry_recycle_second);
-	<?//}?>
-
-	function main_list(){
-
-		var service_idx = "<?=$req_service_idx ?>";
-		var month_date = "<?=$req_month_date ?>";
-
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=main_list&service_idx="+service_idx+"&month_date="+month_date,
-			beforeSend: function() {
-				var h=($(window).height()/2)+$(window).scrollTop();
-				var hh=(h-64);
-
-				var w=$(document).width();
-				var ww=(w-64)/2;				
-				
-				$('#load').remove();
-				$('body').append('<span id="load">LOADING...</span>');
-				$("#load").css("top",hh);
-				$("#load").css("left",ww);
-				$('#load').fadeIn('normal');
-			},
-			success: function (msg) {
-				$("#main_list").html(msg);
-				$('[data-toggle="tooltip"]').tooltip();   
-			}
-		}).done(function( data ) {
-			$('#load').fadeOut('normal');
-		});
-	}
-
-
-	function ministry_record(){
-
-		var ministry_date="<?=$req_month_date ?>";
-
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=ministry_record_get&ministry_date="+ministry_date,
-			success: function (msg) {
-				
-				if (msg=="")
-				{
-					return;
-				}else{
-					var cnt=msg.split("|");
-					$("input[name=ministry_cnt]").each(function (index){
-						$(this).val(cnt[index]);
-					});					
-				}
-			}
-		});
-
-        $("#myModalMinistryRecord").modal();
-	}
-
-	function ministry_record_save(){
-
-		var ministry_cnt="";
-		var ministry_service_idx="";
-
-		var ministry_date="<?=$req_month_date ?>";
-
-		$("input[name=ministry_service_idx]").each(function (index){
-			ministry_service_idx+=","+$(this).val();
-		});	
-		ministry_service_idx=ministry_service_idx.substring(1);
-
-		$("input[name=ministry_cnt]").each(function (index){
-			ministry_cnt+="|"+$(this).val();
-		});	
-		ministry_cnt=ministry_cnt.substring(1);
-
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=ministry_record_save&ministry_cnt="+ministry_cnt+"&ministry_service_idx="+ministry_service_idx+"&ministry_date="+ministry_date,
-			success: function (msg) {
-			}
-		});
-
-	}
-
-	function map_view(map_sub_info, map_sub_addr){
-
-		var h=$(window).height()-150;
-
-		$("#map_iframe").attr("height",h);
-
-		var map_url="map_view.html?map_sub_info="+map_sub_info+"&map_sub_addr="+map_sub_addr+"&h="+h;
-			
-		$("#modal-title").html("<strong>봉사모임장소</strong>: "+map_sub_info+"<br><strong>주소</strong>: "+map_sub_addr);
-		$("#map_iframe").attr("src",map_url);
-        $("#myModalMap").modal();
-
-	}
-
-	function map_view2(map_sub_no, map_sub_idx, map_sub_info, map_sub_addr){
-		//구역지도 확인
-
-		var h=$(window).height()-150;
-
-		$("#map_iframe").attr("height",h);
-
-		var map_url="map_view.html?map_sub_idx="+map_sub_idx+"&map_sub_info="+map_sub_info+"&map_sub_addr="+map_sub_addr+"&h="+h;
-			
-		$("#modal-title").html("<strong>"+map_sub_no+". "+map_sub_info+"</strong><br><strong>주소</strong>: "+map_sub_addr);
-		$("#map_iframe").attr("src",map_url);
-        $("#myModalMap").modal();
-
-	}
-
-	function ministry_start(map_sub_idx) {
-
-		var service_idx = "<?=$req_service_idx ?>";
-		var month_date = "<?=$req_month_date ?>";
-
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=ministry_start&service_idx="+service_idx+"&map_sub_idx="+map_sub_idx,
-			beforeSend: function() {
-				var h=($(window).height()/2)+$(window).scrollTop();
-				var hh=(h-64);
-
-				var w=$(document).width();
-				var ww=(w-64)/2;				
-				
-				$('#load').remove();
-				$('body').append('<span id="load">LOADING...</span>');
-				$("#load").css("top",hh);
-				$("#load").css("left",ww);
-				$('#load').fadeIn('normal');
-			},
-			success: function (msg) {
-				if (msg=="member_session_error"){
-					alert("세션이 종료되었습니다.");
-					location.href="/";
-					return;
-				}else{
-					main_list();
-				}
-			}
-		}).done(function( data ) {
-			$('#load').fadeOut('normal');
-		});
-	}
-
-
-	function ministry_mgr(map_sub_idx){
-		
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=ministry_member_mgr_list&map_sub_idx="+map_sub_idx,
-			success: function (msg) {
-				$("#ministry_member_mgr_list").html(msg);
-			}
-		});
-
-
-        $("#myModalMinistryMgr").modal();
-
-	}
-
-	function ministry_member_mgr_del(map_sub_idx, m_idx){
-
-		if (!confirm("삭제하시겠습니까?"))
-		{
-			return;
-		}
-
-		$.ajax({
-			type: "post",
-			url: "ministry_work.php",
-			data: "work=ministry_member_mgr_del&map_sub_idx="+map_sub_idx+"&m_idx="+m_idx,
-			success: function (msg) {
-				$("#ministry_member_mgr_idx_"+m_idx).remove();
-				main_list();
-			}
-		});
-
-
-	}
-
-</script>
-
-
-  <!-- Modal -->
-  <div class="modal" id="myModalMap" role="dialog">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title">지도</h4>
-        </div>
-        <div class="modal-body">
-		<iframe id="map_iframe" src="" width="100%" height="500"></iframe>
-        </div>
-        <!-- <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
-        </div> -->
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModalMinistryRecord" role="dialog">
-    <div class="modal-dialog ">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title"><strong>봉사인원보고</strong> : 오늘 봉사에 참여한 '총인원'을 기록하세요.</h4>
-        </div>
-        <div class="modal-body">
-<?
-//$sql="select * from db_service_type where service_idx!=7 order by service_idx";
-
-$sql=$sql_service_type . " order by service_idx";
-$result=mysql_query($sql);
-while($rs=mysql_fetch_array($result)){
-
-	$service_idx=$rs[service_idx];
-	$service_type=$rs[service_type];
-?>
-		<label><?=$service_type ?></label>
-		<input type="hidden" name="ministry_service_idx" id="ministry_service_idx_<?=$service_idx ?>" value="<?=$service_idx ?>">
-		<input type="number" name="ministry_cnt" id="ministry_cnt_<?=$service_idx ?>" class="form-control" placeholder="0" min="0">
-<?
-}
-?>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-success" data-dismiss="modal" onclick="ministry_record_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>
-          <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModalMinistryMgr" role="dialog">
-    <div class="modal-dialog ">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" id="modal-title"><strong>봉사 참여 관리</strong></h4><br>잘못 등록된 봉사자의 경우 삭제할수 있습니다.
-        </div>
-        <div class="modal-body">
-			<div id="ministry_member_mgr_list"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>

@@ -1,58 +1,67 @@
-<?
+<?php
+// 데이터베이스 연결 및 필수 함수 포함
 include "../include/db_connect.php";
 include "../include/function.php";
 
-$req_map_sub_idx=$_REQUEST["map_sub_idx"];
-$req_map_sub_info=$_REQUEST["map_sub_info"];
-$req_map_sub_addr=$_REQUEST["map_sub_addr"];
-$req_h=$_REQUEST["h"];
+// 요청된 매핑 서브 인덱스, 정보, 주소, 높이 값을 변수에 저장
+$req_map_sub_idx = $_REQUEST["map_sub_idx"];
+$req_map_sub_info = $_REQUEST["map_sub_info"];
+$req_map_sub_addr = $_REQUEST["map_sub_addr"];
+$req_h = $_REQUEST["h"];
 
-
-if ($req_map_sub_info==""){
-	$req_map_sub_info = "정보없음";
-}
-if ($req_map_sub_addr==""){
-	$req_map_sub_addr = "경기도 안성시 공도읍 양기리 377";
-}
-if ($req_h==""){
-	$req_h = "500";
+// 정보가 비어 있을 경우 "정보없음"으로 설정
+if ($req_map_sub_info == ""){
+    $req_map_sub_info = "정보없음";
 }
 
-
-
-$sql="SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
-$result_type=mysql_query($sql);
-$rs=mysql_fetch_array($result_type);
-$map_sub_no=$rs[map_sub_no];
-$map_sub_info=$rs[map_sub_info];
-$map_sub_cnt=$rs[map_sub_cnt];
-$map_sub_addr=$rs[map_sub_addr];
-$map_sub_polygon=$rs[map_sub_polygon];
-
-$bbb="";
-
-
-if ($map_sub_polygon!=""){
-$chars = explode ("),(", $map_sub_polygon);
-
-for ($i=0;$i<count($chars);$i++)
-{
-  if ($i == 0){
-	$sss.="new daum.maps.LatLng".$chars[$i]."),";
-
-  }else{
-	  if ($i==count($chars)-1){
-		$sss.= "new daum.maps.LatLng(".$chars[$i];
-	  }else{
-		$sss.= "new daum.maps.LatLng(".$chars[$i]."),";
-	  }
-  }
-  
+// 주소가 비어 있을 경우 기본 주소로 설정
+if ($req_map_sub_addr == ""){
+    $req_map_sub_addr = "경기도 안성시 공도읍 양기리 377";
 }
 
-$bbb = $sss;
+// 높이가 비어 있을 경우 기본 높이 500px로 설정
+if ($req_h == ""){
+    $req_h = "500";
+}
+
+// 매핑 서브 인덱스에 해당하는 데이터를 데이터베이스에서 가져옴
+$sql = "SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
+$result_type = mysql_query($sql);
+$rs = mysql_fetch_array($result_type);
+
+// 데이터베이스에서 가져온 값을 변수에 저장
+$map_sub_no = $rs['map_sub_no'];
+$map_sub_info = $rs['map_sub_info'];
+$map_sub_cnt = $rs['map_sub_cnt'];
+$map_sub_addr = $rs['map_sub_addr'];
+$map_sub_polygon = $rs['map_sub_polygon'];
+
+// 다각형 경로를 저장할 변수 초기화
+$bbb = "";
+
+// 다각형 경로 정보가 존재할 경우
+if ($map_sub_polygon != ""){
+    // 경로 정보를 쪼개서 배열로 변환
+    $chars = explode ("),(", $map_sub_polygon);
+
+    // 경로 정보를 LatLng 객체로 변환하여 JavaScript 코드에 사용
+    for ($i = 0; $i < count($chars); $i++) {
+        if ($i == 0) {
+            $sss .= "new daum.maps.LatLng" . $chars[$i] . "),";
+        } else {
+            if ($i == count($chars) - 1) {
+                $sss .= "new daum.maps.LatLng(" . $chars[$i];
+            } else {
+                $sss .= "new daum.maps.LatLng(" . $chars[$i] . "),";
+            }
+        }
+    }
+
+    // 다각형 경로 정보를 $bbb 변수에 저장
+    $bbb = $sss;
 }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,67 +69,70 @@ $bbb = $sss;
     <title>주소로 장소 표시하기</title>
     
 <style type="text/css">
-	body{
-		margin:0;
-		padding:0;
-	}
+    /* 본문에 대한 기본 마진과 패딩 제거 */
+    body{
+        margin:0;
+        padding:0;
+    }
 </style>
 
 </head>
 <body>
 
+<!-- 지도 표시를 위한 div -->
 <div id="map" style="width:100%;height:<?=$req_h ?>px;"></div>
 
+<!-- 카카오 지도 API를 불러옴 -->
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=<?=DAUM_MAP_API ?>&libraries=services"></script>
 <script>
-var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+// 지도를 표시할 div 요소와 옵션을 설정
+var mapContainer = document.getElementById('map'), // 지도를 표시할 div
     mapOption = {
         center: new daum.maps.LatLng(37.000922, 127.195686), // 지도의 중심좌표
         level: 3 // 지도의 확대 레벨
     };  
 
-// 지도를 생성합니다    
+// 지도를 생성
 var map = new daum.maps.Map(mapContainer, mapOption); 
 
-// 주소-좌표 변환 객체를 생성합니다
+// 주소-좌표 변환 객체를 생성
 var geocoder = new daum.maps.services.Geocoder();
 
-// 주소로 좌표를 검색합니다
+// 주소로 좌표를 검색
 geocoder.addressSearch('<?=$req_map_sub_addr ?>', function(result, status) {
 
-    // 정상적으로 검색이 완료됐으면 
+    // 정상적으로 검색이 완료됐을 경우
      if (status === daum.maps.services.Status.OK) {
 
         var coords = new daum.maps.LatLng(result[0].y, result[0].x);
 
-        // 결과값으로 받은 위치를 마커로 표시합니다
+        // 결과값으로 받은 위치를 마커로 표시
         var marker = new daum.maps.Marker({
             map: map,
             position: coords
         });
 
-        // 인포윈도우로 장소에 대한 설명을 표시합니다
+        // 인포윈도우로 장소에 대한 설명을 표시
         var infowindow = new daum.maps.InfoWindow({
             content: '<div style="width:150px;text-align:center;padding:6px 0;"><?=$req_map_sub_info ?></div>'
         });
         infowindow.open(map, marker);
 
-        // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+        // 지도의 중심을 결과값으로 받은 위치로 이동
         map.setCenter(coords);
     } 
 });    
 
-
-// 지도에 다각형을 표시한다 
+// 지도에 다각형을 표시
 var polygon = new daum.maps.Polygon({
-	map : map, // 다각형을 표시할 지도 객체
-	path:[<?=$bbb ?>],
-	fillColor: '#FF0000', // 채움 색
-	fillOpacity: 0.3, // 채움 불투명도
-	strokeWeight: 2, // 선의 두께 
-	strokeColor: '#FF0000', // 선 색
-	strokeOpacity: 0.9, // 선 투명도
-	strokeStyle: 'solid' // 선 스타일
+    map : map, // 다각형을 표시할 지도 객체
+    path: [<?=$bbb ?>], // 다각형 경로 좌표
+    fillColor: '#FF0000', // 채움 색상 (빨간색)
+    fillOpacity: 0.3, // 채움 불투명도 (30%)
+    strokeWeight: 2, // 선의 두께 
+    strokeColor: '#FF0000', // 선 색상 (빨간색)
+    strokeOpacity: 0.9, // 선 투명도 (90%)
+    strokeStyle: 'solid' // 선 스타일 (실선)
 });
 </script>
 </body>
