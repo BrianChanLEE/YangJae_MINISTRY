@@ -1,0 +1,177 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/map_normal.html?map_service=normal" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="#"><strong>구역관리</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">	  
+		  <div class="row marginbottom10">
+
+			<div class="col-sm-12">
+			  <ul class="nav nav-pills">
+				<li><a href="map_normal.html?map_service=normal">일반</a></li>
+				<li><a href="map_normal.html?map_service=apt">아파트</a></li>
+				<li><a href="tel_service.html">전화봉사</a></li>
+				<li><a href="tel_service_list.html">전화봉사관리</a></li>
+				<li class="active"><a href="person_service.html">개인구역</a></li>
+				<li><a href="map_normal.html?map_service=display">전시대</a></li>
+				<li><a href="map_normal.html?map_service=letter">편지봉사</a></li>
+			  </ul>
+			</div>
+		  </div>
+
+
+		<div class="row col-sm-12 marginbottom10">
+<?
+$sql="
+select *, (select m_name from member where m_idx=T.ministry_member_idx) as ministry_member_name from 
+(
+	SELECT *, 
+		(select ministry_member_idx from ministry_list where map_sub_idx=a.map_sub_idx and ministry_date is null) as ministry_member_idx
+	FROM map_normal_sub a
+) T
+where (ministry_member_idx is not null and ministry_member_idx <>'')
+ORDER BY map_sub_no";
+$result=mysql_query($sql);
+
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_sub_idx=$rs[map_sub_idx];
+	$map_sub_no=$rs[map_sub_no];
+	$map_sub_info=$rs[map_sub_info];
+	$map_sub_cnt=$rs[map_sub_cnt];
+	$map_sub_addr=$rs[map_sub_addr];
+	$map_sub_member_idx=$rs[map_sub_member_idx];
+	$ministry_member_name=$rs[ministry_member_name];
+	$ministry_member_idx=$rs[ministry_member_idx];
+?>
+
+		<div class="btn-group" id="map_sub_idx_<?=$map_sub_idx ?>">
+		  <button type="button" class="btn btn-default btn-primary3 <?=($ministry_member_idx>0)?"btn-danger":"" ?>"><?=$map_sub_no ?><br><?=$ministry_member_name ?></button>
+		  <button type="button" class="btn btn-default dropdown-toggle dropdown-toggle2 <?=($ministry_member_idx>0)?"btn-danger":"" ?>" data-toggle="dropdown">
+			<span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu" role="menu">
+			<li><a href="#" onclick="map_modify('<?=$map_sub_idx ?>', '<?=$map_sub_no ?>', '<?=$map_sub_info ?>', '<?=$map_sub_cnt ?>', '<?=$map_sub_addr ?>', '<?=$ministry_member_idx ?>')" ><span class="glyphicon glyphicon-pencil"></span> 수정</a></li>
+			<li><a href="#" onclick="map_del('<?=$map_sub_idx ?>')"><span class="glyphicon glyphicon-trash"></span> 삭제</a></li>
+		  </ul>
+		</div>
+<?
+}
+?>
+		
+		</div>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function map_modify(map_sub_idx, map_sub_no, map_sub_info, map_sub_cnt, map_sub_addr, ministry_member_idx) {
+
+		$("#map_sub_idx").val(map_sub_idx);
+		$("#map_sub_no").val(map_sub_no);
+		$("#map_sub_info").val(map_sub_info);
+		$("#map_sub_cnt").val(map_sub_cnt);
+		$("#map_sub_addr").val(map_sub_addr);
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=member_list&ministry_member_idx="+ministry_member_idx,
+			success: function (msg) {
+				$("#ministry_member_idx").html(msg);
+			}
+		});
+
+        $("#myModal").modal();
+	}	
+
+	function map_save() {
+
+		var map_sub_idx = $("#map_sub_idx").val();
+		var ministry_member_idx = $("#ministry_member_idx").val();
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_save2&map_sub_idx=" + map_sub_idx + "&ministry_member_idx=" + ministry_member_idx,
+			success: function (msg) {
+				location.reload();
+			}
+		});
+	}	
+
+	function map_del(map_sub_idx) {
+
+		if (!confirm("개인구역을 삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_del2&map_sub_idx=" + map_sub_idx,
+			success: function (msg) {
+				$("#map_sub_idx_" + map_sub_idx).remove();
+			}
+		});
+	}	
+//-->
+</script>
+
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">수정</h4>
+        </div>
+        <div class="modal-body">
+		<form role="form">
+          <input type="hidden" name="map_sub_idx" id="map_sub_idx">
+          <input type="text" name="map_sub_no" id="map_sub_no" placeholder="구역 번호" class="form-control" disabled>
+          <input type="text" name="map_sub_info" id="map_sub_info" placeholder="구역 이름" class="form-control" disabled>
+          <input type="text" name="map_sub_cnt" id="map_sub_cnt" placeholder="봉사 적정 인원" class="form-control" disabled>
+          <input type="text" name="map_sub_addr" id="map_sub_addr" placeholder="구역 주소" class="form-control" disabled>
+		  <select name="ministry_member_idx" id="ministry_member_idx" class="form-control">
+			<option value="">
+		  </select>
+		</form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal" onclick="map_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,215 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+$req_tel_idx=$_REQUEST["tel_idx"];
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/tel_service.html" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="/admin/tel_service.html">구역관리</a> > <a href="#"><strong>전화봉사</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">
+
+
+		<div id="sortable">
+<?
+$sql="SELECT * FROM tel_list WHERE 1=1 ";
+$sql.=" and tel_idx='$req_tel_idx'";
+$sql.=" order by tel_list_rank";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$tel_list_idx=$rs[tel_list_idx];
+	$tel_list_name=$rs[tel_list_name];
+	$tel_list_number=$rs[tel_list_number];
+	$tel_list_addr=$rs[tel_list_addr];
+	$tel_list_visit=$rs[tel_list_visit];
+	$tel_list_rank=$rs[tel_list_rank];
+?>
+
+			<div id="tel_list_idx_<?=$tel_list_idx ?>" class="marginbottom15">
+				
+			  <input type="hidden" name="rank_tel_list_idx_<?=$tel_list_idx ?>" id="rank_tel_list_idx_<?=$tel_list_idx ?>" value="<?=$tel_list_idx ?>">
+
+				<div class="form-inline">
+					<div class="form-group">
+					  <input type="text" class="form-control" name="tel_list_name_<?=$tel_list_idx ?>" id="tel_list_name_<?=$tel_list_idx ?>" placeholder="이름" value="<?=$tel_list_name ?>">
+					  <input type="text" class="form-control" name="tel_list_number_<?=$tel_list_idx ?>" id="tel_list_number_<?=$tel_list_idx ?>" placeholder="전화번호" value="<?=$tel_list_number ?>">
+					  <input type="text" class="form-control" name="tel_list_addr_<?=$tel_list_idx ?>" id="tel_list_addr_<?=$tel_list_idx ?>" placeholder="주소" value="<?=$tel_list_addr ?>">
+					</div>
+				</div>
+
+				<div class="form-group text-right">
+					<button type="button" class="btn btn-default btn-sm pull-left" onclick="up('<?=$req_tel_idx ?>','<?=$tel_list_idx ?>','<?=$tel_list_rank ?>')">
+					  <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span> 위로
+					</button>
+					<button type="button" class="btn btn-default btn-sm pull-left" onclick="down('<?=$req_tel_idx ?>','<?=$tel_list_idx ?>','<?=$tel_list_rank ?>')">
+					  <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span> 아래로
+					</button>
+
+					<button type="button" class="btn btn-default btn-sm" id="btn-add" onclick="tel_list_save('<?=$tel_list_idx ?>');">저장</button>
+					<button type="button" class="btn btn-default btn-sm" id="btn-del" onclick="tel_list_del('<?=$tel_list_idx ?>');">삭제</button>
+				</div>
+			</div>
+
+<?
+}
+?>
+		</div>
+
+			<button type="button" class="btn btn-success" id="btn-add"  onclick="tel_list_add('<?=$req_tel_idx ?>');">+ 추가</button>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	$('#sortable').sortable({
+
+		revert: true,
+		update: function (event, ui) {
+
+			var val = $(this).sortable('toArray');
+			var n = 0;
+			var num = 0;
+			var arrIdx = "", arrRank = "";
+	
+			for (var i = 0; i < val.length; i++) {
+				n = ++num;
+				$('#rank_' + val[i]).val(n);
+				if (i > 0) {
+					arrRank += ",";
+				}
+				arrRank += n;
+
+                idx = val[i].replace('tel_list_idx_', '');
+				if (i > 0) {
+					arrIdx += ",";
+				}
+				arrIdx += idx;
+			}
+
+			sort_auto(arrIdx, arrRank);
+		}
+	});
+
+
+	function sort_auto(idx, rank) {
+
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_sort&idx=" + idx + "&rank=" + rank,
+			success: function (msg) {
+				location.reload();
+			},
+			error: function (request, status, error) {
+				//alert(status + ' : ' + error);
+			}
+		});
+	}
+
+	function up(tel_idx, tel_list_idx, tel_list_rank){
+
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_up&tel_idx="+tel_idx+"&tel_list_idx="+tel_list_idx+"&tel_list_rank="+tel_list_rank,
+			success: function (msg) {
+				if (msg=="yes"){
+					location.reload();
+				}else{
+					alert("맨위 입니다.");
+				}
+			}
+		});
+	}
+	function down(tel_idx, tel_list_idx, tel_list_rank){
+
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_down&tel_idx="+tel_idx+"&tel_list_idx="+tel_list_idx+"&tel_list_rank="+tel_list_rank,
+			success: function (msg) {
+				if (msg=="yes"){
+					location.reload();
+				}else{
+					alert("맨아래 입니다.");
+				}
+			}
+		});
+	}
+//-->
+</script>
+<script type="text/javascript">
+<!--
+	function tel_list_add(tel_idx) {
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_add&tel_idx="+tel_idx,
+			success: function (msg) {
+				location.reload();
+			}
+		});
+	}
+
+	function tel_list_save(tel_list_idx) {
+		var tel_list_name = $("#tel_list_name_"+tel_list_idx).val();
+		var tel_list_number = $("#tel_list_number_"+tel_list_idx).val();
+		var tel_list_addr = $("#tel_list_addr_"+tel_list_idx).val();
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_save&tel_list_idx=" + tel_list_idx + "&tel_list_name=" + tel_list_name + "&tel_list_number=" + tel_list_number + "&tel_list_addr=" + tel_list_addr,
+			success: function (msg) {
+				alert("저장완료");
+			}
+		});
+	}
+
+	function tel_list_del(tel_list_idx) {
+
+		if (!confirm("삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "tel_list_work.php",
+			data: "work=tel_list_del&tel_list_idx=" + tel_list_idx,
+			success: function (msg) {
+				$("#tel_list_idx_" + tel_list_idx).remove();
+			}
+		});
+	}	
+//-->
+</script>

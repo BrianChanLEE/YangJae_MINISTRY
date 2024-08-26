@@ -1,0 +1,235 @@
+<?php
+include "../include/db_connect.php";  // 데이터베이스 연결 스크립트를 포함
+include "../include/function.php";  // 공통 함수들을 포함
+
+session_check();  // 사용자가 로그인되어 있는지 확인하는 함수 호출
+
+// 요청 파라미터에서 필요한 데이터를 변수에 저장
+$req_m_name = $_REQUEST["m_name"];
+$req_tel_idx = $_REQUEST["tel_idx"];
+
+$m_idx = $_SESSION['m_idx'];  // 현재 세션에서 사용자의 ID를 가져옴
+$sql = "SELECT * FROM tel_service WHERE tel_member_idx='$m_idx'";  // 현재 사용자가 전화 봉사에 참여 중인지 확인하는 SQL 쿼리
+$result = mysql_query($sql);
+$rs = mysql_fetch_array($result);
+$tel_member_idx = $rs['tel_member_idx'];
+
+// 현재 사용자가 참여 중이 아닌 경우 (주석 처리된 리디렉션 코드)
+if ($tel_member_idx == "") {
+	// echo "<script>location.href='/tel/'</script>";
+}
+
+// 현재 사용자가 진행 중인 봉사 활동의 'tel_ministry_idx' 값을 가져오는 SQL 쿼리
+$sql = "SELECT MAX(tel_ministry_idx) AS tel_ministry_idx FROM tel_ministry_stat WHERE tel_idx='$req_tel_idx' AND tel_ministry_name='$m_idx' AND tel_ministry_end =''";
+$result = mysql_query($sql);
+$rs = mysql_fetch_array($result);
+$tel_ministry_idx = $rs['tel_ministry_idx'];
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?php include "../include/head.html"; ?>  // 공통 헤더 파일을 포함하여 메타 태그, 스타일 시트 등을 설정
+</head>
+<body> 
+
+    <!-- 주석 처리된 네비게이션 바 코드. 필요에 따라 활성화 가능 -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>전화봉사</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+	<div class="alert alert-success text-center" role="alert">전화봉사</div> -->
+
+  <!-- 지도 모달 -->
+  <div class="modal" id="myModalMap" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title" id="modal-title">지도</h4>
+        </div>
+        <div class="modal-body">
+		<iframe id="map_iframe" src="" width="100%" height="500"></iframe>  <!-- 지도를 표시할 iframe -->
+        </div>
+        <!-- <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+    <div class="page-home">
+      <div class="container">	  
+
+		<div class="row panel panel-success">
+		  <div class="panel-heading">전화봉사</div>
+		  <div class="panel-body">
+			전화번호를 누르면 전화가 연결됩니다.<br>봉사를 끝내실경우 <strong>'봉사마침'</strong> 버튼을 눌러주세요.
+			<div class="pull-right"><button type="button" class="btn btn-success btn-sm " onclick="tel_end('<?=$req_tel_idx ?>', '<?=$tel_ministry_idx ?>')">봉사마침</button></div>  <!-- 봉사 마침 버튼 -->
+		  </div>
+		</div>
+		 
+		<div class="form-group has-success has-feedback">
+			<div class="col-sm-6 col-xs-8">
+			<form name="form1" action="tel_list.html" method="post" class="form-horizontal">
+			  <input type="text" class="form-control" id="m_name" name="m_name" value="<?=$req_m_name ?>" placeholder="상호 검색">  <!-- 상호 검색 입력 필드 -->
+			  <input type="hidden" class="form-control" id="tel_idx" name="tel_idx" value="<?=$req_tel_idx ?>">  <!-- 숨겨진 필드: 전화 인덱스 -->
+			  <button class="bbs-search-btn"><span class="glyphicon glyphicon-search form-control-feedback"></span></button>  <!-- 검색 버튼 -->
+			</form>
+			</div>
+			<div class="col-sm-6 col-xs-4 bbs-write-btn">
+				
+			  </div>
+			</div>
+
+          <div class="row">
+            <table class="table table-hover">
+              <thead>
+			
+				<tr class="table-thead">
+				  <td>최근통화</td>
+				  <td>상호이름(주소, 전화번호)</td>
+				  <td></td>
+                  <td></td>
+				</tr>
+				
+              </thead>
+              <tbody>
+			<?php
+if ($req_m_name != "") {
+	// 상호명이 입력된 경우 해당 상호명에 대한 검색 쿼리 실행
+	$sql = "SELECT *, (SELECT tel_content_date FROM tel_content_list WHERE tel_list_idx=a.tel_list_idx ORDER BY tel_content_date DESC LIMIT 1 ) AS tel_content_date FROM tel_list a WHERE tel_idx='$req_tel_idx' AND tel_list_name LIKE '%$req_m_name%' ORDER BY tel_content_date, tel_list_rank";
+} else {
+	// 상호명이 입력되지 않은 경우 기본 쿼리 실행
+	$sql = "SELECT *, (SELECT tel_content_date FROM tel_content_list WHERE tel_list_idx=a.tel_list_idx ORDER BY tel_content_date DESC LIMIT 1 ) AS tel_content_date FROM tel_list a WHERE tel_idx='$req_tel_idx' ORDER BY tel_content_date, tel_list_rank";
+}
+	$result = mysql_query($sql);
+
+			// 리스트 시작
+			while ($rs = mysql_fetch_array($result)) {
+				$tel_list_idx = $rs["tel_list_idx"];
+				$tel_list_number = $rs["tel_list_number"];
+				$tel_list_number2 = $rs["tel_list_number"];
+				$tel_list_refusal = $rs["tel_list_refusal"];
+				$tel_list_sunday = $rs["tel_list_sunday"];
+				$tel_list_write = $rs["tel_list_write"];
+				$tel_list_name = $rs["tel_list_name"];
+                $tel_list_addr = $rs["tel_list_addr"];
+				
+				$tel_content_date = $rs["tel_content_date"];
+
+				// 전화 거절 여부에 따른 처리
+				if ($tel_list_refusal == "Y") {
+					$tel_list_number2 = "#";
+					$str_tel_list_refusal = "전화거절";
+				} else {
+					$str_tel_list_refusal = "";
+				}
+
+				// 일요일 부재 여부에 따른 처리
+				if ($tel_list_sunday == "Y") {
+					$tel_list_number3 = "#";
+					$str_tel_list_sunday = "일요일부재";
+				} else {
+					$str_tel_list_sunday = "";
+				}
+
+				// 최근 통화 날짜에 따른 처리
+				if ($tel_content_date != "") {
+
+					$compareday = date("Y-m-d", strtotime("-60 days"));
+
+					$regdate = substr($tel_content_date, 0, 10);
+
+					if ($regdate < $compareday) {
+						$write = "Y";
+					} else {
+						$write = "N";
+					}
+
+				} else {
+					$write = "Y";
+				}
+				
+			?>
+                <tr>
+                  <td class="tel-date"><?=substr($tel_content_date, 0, 10) ?></td>  <!-- 최근 통화 날짜 표시 -->
+                  <td class="tel-number">
+				    <span class="glyphicon glyphicon-phone-alt"></span>
+					<?php if ($write == "Y") { ?>
+						<a href="tel:<?=$tel_list_number2 ?>"><?=$tel_list_number ?><br><?=$tel_list_name ?><br><?=$tel_list_addr ?></a>  <!-- 전화 연결 링크 -->
+						<button type="button" class="btn btn-default btn-sm " id="btn-map" onclick="map_view2('<?=$tel_list_name ?>', '<?=$tel_list_addr ?>')"><span class="glyphicon glyphicon-map-marker"></span> 카카오맵</button>  <!-- 카카오맵 버튼 -->
+					<?php } else { ?>
+						<?=$tel_list_number ?><br><?=$tel_list_name ?><br><?=$tel_list_addr ?>
+						<button type="button" class="btn btn-default btn-sm " id="btn-map" onclick="map_view2('<?=$tel_list_name ?>', '<?=$tel_list_addr ?>')"><span class="glyphicon glyphicon-map-marker"></span> 카카오맵</button>  <!-- 카카오맵 버튼 -->
+					<?php } ?>
+				  <span class="label label-danger"><?=$str_tel_list_refusal ?></span>  <!-- 전화 거절 라벨 -->
+				  <span class="label label-danger"><?=$str_tel_list_sunday ?></span>  <!-- 일요일 부재 라벨 -->
+				</td>
+                  <td align="right">
+					<?php if ($write == "Y") { ?>
+					  <a class="btn btn-default btn-sm" href="tel_content.html?tel_write=Y&tel_idx=<?=$req_tel_idx ?>&tel_list_idx=<?=$tel_list_idx ?>">기록</a>  <!-- 기록 버튼 -->
+					<?php } else { ?>
+					  <a class="btn btn-default btn-sm" href="tel_content.html?tel_write=Y&tel_idx=<?=$req_tel_idx ?>&tel_list_idx=<?=$tel_list_idx ?>">기록</a>  <!-- 보기 버튼 -->
+					<?php } ?>
+				  </td>
+                </tr>
+			<?php
+			}
+			?>
+              </tbody>
+            </table>
+          </div>
+      </div>
+    </div>
+
+<?php include "../include/footer.html"; ?>  // 공통 푸터 파일을 포함하여 페이지 끝 부분을 설정
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>  <!-- Bootstrap JavaScript 파일 로드 -->
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=<?=DAUM_MAP_API ?>&libraries=services"></script>  <!-- Kakao 지도 API 로드 -->
+<script type="text/javascript">
+<!--
+	// 전화봉사 종료 처리 함수
+	function tel_end(tel_idx, tel_ministry_idx) {
+
+		if (!confirm("전화봉사를 끝내시겠습니까?")) {
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "tel_work.php",
+			data: "work=tel_end&tel_idx=" + tel_idx + "&tel_ministry_idx=" + tel_ministry_idx,
+			success: function (msg) {
+				location.href = "/tel/";  // 전화 봉사 페이지로 리디렉션
+			}
+		});
+	}
+
+	// 지도를 표시하는 함수
+	function map_view2(map_sub_info, map_sub_addr) {
+
+		var geocoder = new kakao.maps.services.Geocoder();
+
+       // 주소로 좌표를 검색합니다
+       geocoder.addressSearch(map_sub_addr, function(result, status) {
+
+	    // 정상적으로 검색이 완료됐으면 
+	     if (status === kakao.maps.services.Status.OK) {
+
+	        var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+	        
+			var map_url = "https://map.kakao.com/link/roadview/" + result[0].y + "," + result[0].x;
+		    window.open(map_url);  // 새로운 창에서 카카오맵 로드뷰 링크 열기
+	    } 
+	});    
+	}
+//-->
+</script>

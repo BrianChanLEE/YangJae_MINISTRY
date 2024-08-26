@@ -1,0 +1,60 @@
+<?php
+// 데이터베이스 연결 스크립트와 공통 함수들을 포함
+include "include/db_connect.php";
+include "include/function.php";
+
+// 사용자가 이미 로그인된 상태라면 홈 페이지로 리디렉션
+session_home_check();
+
+// 특정 회중(congregation)의 정보를 가져오는 SQL 쿼리
+$sql = "SELECT * FROM congregation WHERE cong_idx='1'";
+$result = mysql_query($sql);
+$rs = mysql_fetch_array($result, MYSQL_ASSOC);
+
+// 회중의 이름을 변수에 저장
+$cong_name = $rs["cong_name"];
+
+// 세션에 고유한 토큰 값을 생성하여 저장
+$m_token = $_SESSION['m_token'] = md5(uniqid(mt_rand(), true));
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+    <!-- 공통 헤더 파일 포함 (메타 태그, 스타일 시트 등) -->
+    <?php include "./include/head.html"; ?>
+    <link rel="stylesheet" href="css/login.css">  <!-- 로그인 페이지 전용 스타일 시트 -->
+</head>
+<body>
+<div class="container">
+
+    <!-- 로그인 폼 -->
+    <form method="post" action="logincheck.php" class="form-signin">
+    
+        <h5 class="form-signin-heading">온라인 구역 카드</h5>
+        
+        <!-- 회중의 이름을 표시 -->
+        <div class="congregation-title">
+            <?=$cong_name ?>
+        </div>
+
+        <!-- 사용자 이름 입력 필드 -->
+        <input type="text" name="m_name" id="m_name" placeholder="이름" class="form-control"/>
+        <!-- 비밀번호 입력 필드 -->
+        <input type="password" name="m_pw" id="m_pw" placeholder="비밀번호" class="form-control"/>
+        <!-- 세션 토큰을 숨겨진 필드로 전달 -->
+        <input type="hidden" name="m_token" id="m_token" value="<?=$m_token ?>">
+
+        <!-- 자동 로그인 체크박스 -->
+        <label><input type="checkbox" name="m_logincheck" id="m_logincheck"> 자동로그인 </label>
+        <!-- 로그인 버튼 -->
+        <button type="submit" class="btn btn-success form-control">로그인</button>
+
+    </form>
+
+</div><!-- /container -->
+</body>
+</html>
+
+<!-- JavaScript 파일 로드 -->
+<script src="main.js"></script>

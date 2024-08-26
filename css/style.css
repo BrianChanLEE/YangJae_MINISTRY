@@ -1,0 +1,520 @@
+﻿html, body, div, span, applet, object, iframe,
+p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+/*table, caption, tbody, tfoot, thead, tr, th, td,*/
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 14px;
+	vertical-align: baseline;
+	font-family: 'Raleway', sans-serif;
+}
+
+body{
+	background-color:#ffffff;
+}
+
+
+.fontsize12{
+	font-size:12px;
+}
+
+.marginright10{
+	margin-right:10px;
+}
+
+.margintop20{
+	margin-top:20px;
+}
+.marginbottom10{
+	margin-bottom:10px;
+}
+.marginbottom15{
+	margin-bottom:15px;
+}
+.marginbottom50{
+	margin-bottom:50px;
+}
+.marginbottom100{
+	margin-bottom:100px;
+}
+
+
+.padding10{
+	padding:10px;
+}
+.paddingtop15{
+	padding-top:15px;
+}
+.paddingbottom15{
+	padding-bottom:15px;
+}
+.paddingleft10{
+	padding-left:10px;
+}
+
+.borderbottom1{
+	border-bottom:1px solid #b1b1b1;
+}
+
+
+
+
+/*---------------------------------*/
+/* common */
+/*---------------------------------*/
+/* home */
+.page-home{
+	margin:5px 0;
+}
+
+/* 일반페이지 */
+.page{
+	margin:75px 0;
+}
+
+
+/* 관리자페이지 */
+.page .admin-menu li{
+	display:inline-block;
+	margin:1px;
+	padding-top:30px;
+	list-style: none;
+	text-align:center;
+	border-radius:5px;
+	background-color:#5cb85c; /*#0a8a98*/
+	width:90px;
+	height:100px;
+}
+
+.page .admin-menu ul a li{
+	text-align:center;
+	font-family: sans-serif;
+	text-decoration: none;
+	color: #ffffff;
+	font-size: 16px;
+	font-weight:600;
+}
+
+
+/* nav */
+.navpress{
+	margin: 23px 0 0 0;
+}
+
+.navpress a{
+	font-family: sans-serif;
+	text-decoration: none;
+	color: #000000;
+	font-size: 14px;
+	font-weight: 400;
+}
+
+
+/* 하단 footer */
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  background-color: #f5f5f5;
+  z-index:10;
+}
+
+
+.footer .menu{
+	text-align:center;
+}
+
+.footer li{
+	display:inline-block;
+	margin-top: 3px;
+	list-style: none;
+	text-align:center;
+}
+
+.footer ul li a{
+	font-family: sans-serif;
+	text-decoration: none;
+	color: #000000;
+	font-size: 10px;
+	font-weight: 400;
+}
+
+.footer ul li p{
+	font-size: 12px;
+}
+
+
+.footer ul li p.active{
+	color: #5cb85c;
+}
+
+.footer ul li img{
+	width:28px;
+}
+
+@media (max-width: 400px) {
+	.footer .menu{
+		margin-top:8px;
+	}
+	.footer ul li p{
+		display:none;
+	}
+}
+
+
+
+/*---------------------------------*/
+/* home */
+/*---------------------------------*/
+/* index.html */
+
+.home-member-name-list{
+	font-size:13px;
+}
+
+.home-progress-percent{
+	padding:5px 0;
+}
+
+.home-map-sub-no{
+	font-size:16px;
+	font-weight:bold;
+	text-align:center;
+	border-right:3px solid #3c763d;
+	padding:5px 0;
+}
+.home-map-sub-info{
+	font-size:14px;
+	font-weight:bold;
+	color:#3c763d;
+}
+
+
+/* ministry_list.html */
+
+.home-btn-bottom{
+	position:fixed;
+	bottom:0px;
+	background-color:#ffffff;
+	width:100%;
+}
+
+.table > tbody > tr > td.home-map-list-line-css{
+	border-top:2px solid #669999;
+}
+
+
+/*---------------------------------*/
+/* tel */
+/*---------------------------------*/
+/* index.html */
+
+.tel-date{
+	font-size:14px;
+}
+.tel-number, .tel-number a{
+	font-size:14px;
+}
+
+
+/* tel_content.html */
+.tel-list{
+	display:block;
+	padding:10px 0;
+	border-bottom:1px solid #e1e1e1;
+}
+
+.tel-list-title{
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0 0 10px;
+}
+.tel-list-content{
+    font-size: 14px;
+}
+
+
+/*---------------------------------*/
+/* person */
+/*---------------------------------*/
+/* index.html */
+
+.person-map-sub-no{
+	font-size:16px;
+	font-weight:bold;
+	text-align:center;
+	border-right:3px solid #3c763d;
+	padding:10px 0;
+}
+.person-map-sub-info{
+	font-size:14px;
+	font-weight:bold;
+	color:#3c763d;
+}
+
+
+/* person_ministry.html */
+
+.person-btn-bottom{
+	position:fixed;
+	bottom:0px;
+	background-color:#ffffff;
+	width:100%;
+}
+
+.table > tbody > tr > td.person-map-list-line-css{
+	border-top:2px solid #669999;
+}
+
+
+/*---------------------------------*/
+/* bbs */
+/*---------------------------------*/
+/* bbs_list.html */
+
+
+.bbs-search-btn{
+	background: none;
+	color: #ccc;
+	height: 38px;
+	outline: none;
+	position: absolute;
+	right: 1px;
+	top: 1px;
+	width: 38px;
+
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 0;
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 1.42857143;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	-ms-touch-action: manipulation;
+	  touch-action: manipulation;
+	cursor: pointer;
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	    -ms-user-select: none;
+		    user-select: none;
+	background-image: none;
+	border: 1px solid transparent;
+	border-radius: 4px;
+}
+
+.bbs-write-btn{
+	text-align:right;
+}
+
+.bbs-table-thead{
+	font-weight:600;
+}
+
+.bbs-text-overflow{
+	text-overflow:ellipsis;
+	white-space:nowrap;
+	word-wrap:normal;
+	overflow:hidden;
+	height:20px;
+}
+
+@media (max-width: 600px) {
+	.bbs-text-overflow-width{	
+		width:200px;
+	}
+}
+@media (max-width: 500px) {
+	.bbs-text-overflow-width{	
+		width:190px;
+	}
+}
+@media (max-width: 400px) {
+	.bbs-text-overflow-width{	
+		width:110px;
+	}
+}
+
+
+/*---------------------------------*/
+/* admin */
+/*---------------------------------*/
+
+	.admin-week-save-complete,
+	.admin-month-save-complete,
+	.admin-meet-save-complete,
+	.admin-map-save-complete{
+		color:#ff0000;
+	}
+
+	.admin-map-move-icon{
+		position:absolute;z-index:10;top:7px;left:7px;cursor:pointer;	
+	}
+
+/*---------------------------------*/
+
+#load{
+	display: none;
+	position: absolute;
+	background: url(/img/loader.gif) no-repeat center;
+	width:64px;
+	height:64px;
+	text-indent: -9999em;
+}
+
+
+
+
+/*---------------------------------*/
+/* guide */
+/*---------------------------------*/
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 100px;
+  height: 20px;
+}
+
+.switch input {display:none;}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #747474;
+  -webkit-transition: .4s;
+  transition: .4s;
+  color:#fff;
+  font-size:75%;
+  font-weight:600;
+  line-height:20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 10px;
+  width: 10px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #f0ad4e;
+/*  color:#8311b5;*/
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #f0ad4e;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(80px);
+  -ms-transform: translateX(80px);
+  transform: translateX(80px);
+/*  background-color: #8311b5;*/
+
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 4px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+/*---------------------------------*/
+/* site_option */
+/*---------------------------------*/
+.option-fullname{
+  width:230px;
+/*  border:1px solid red;*/
+  display: inline-block;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.switch2 {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch2 input {display:none;}
+
+.slider2 {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider2:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider2 {
+  background-color: #5cb85c;
+}
+
+input:focus + .slider2 {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider2:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+
+}
+
+/* Rounded sliders */
+.slider2.round2 {
+  border-radius: 34px;
+}
+
+.slider2.round2:before {
+  border-radius: 50%;
+}
+	
+
+
+.box-border{
+	border:2px solid #398439;
+	padding:0px 4px 0px 4px ;
+}

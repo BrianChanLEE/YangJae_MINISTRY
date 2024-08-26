@@ -1,0 +1,299 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+$req_week_yoil=$_REQUEST["week_yoil"];
+
+if (!$req_week_yoil || $req_week_yoil < 0){
+  $req_week_yoil=1;	//값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 1으로 처리
+}
+
+
+//인도자
+$str_guide1="";
+$sql="SELECT * FROM member WHERE 
+								   m_mgr like '%1%' 
+								or m_mgr like '%2%' 
+								or m_mgr like '%3%'	
+								or m_mgr like '%4%'  	
+	  ORDER BY m_name";
+$result=mysql_query($sql);
+
+$str_guide1.="<option value='0'>선택";
+while($rs=mysql_fetch_array($result)){
+	$m_idx=$rs[m_idx];
+	$m_name=$rs[m_name];
+
+	$str_guide1.="<option value='".$m_idx."'>".$m_name."";
+}
+
+
+//보조자
+$str_guide2="";
+$sql="SELECT * FROM member WHERE 
+								   m_mgr like '%1%' 
+								or m_mgr like '%2%' 
+								or m_mgr like '%3%' 	
+								or m_mgr like '%4%' 
+	  ORDER BY m_name";
+$result=mysql_query($sql);
+
+$str_guide2.="<option value='0'>선택";
+while($rs=mysql_fetch_array($result)){
+	$m_idx=$rs[m_idx];
+	$m_name=$rs[m_name];
+
+	$str_guide2.="<option value='".$m_idx."'>".$m_name."";
+}
+
+
+//봉사형태
+$str_service="";
+$sql="SELECT * FROM db_service_type";
+$result=mysql_query($sql);
+
+$str_service.="<option value='0'>봉사형태선택";
+while($rs=mysql_fetch_array($result)){
+	$service_idx=$rs[service_idx];
+	$service_type=$rs[service_type];
+
+	$str_service.="<option value='".$service_idx."'>".$service_type."";
+}
+
+
+//모임장소
+$str_location="";
+$sql="SELECT * FROM meeting_location";
+$result=mysql_query($sql);
+
+$str_location.="<option value='0'>모임장소선택";
+while($rs=mysql_fetch_array($result)){
+	$meeting_idx=$rs[meeting_idx];
+	$meeting_name=$rs[meeting_name];
+	$meeting_addr=$rs[meeting_addr];
+
+	$str_location.="<option value='".$meeting_idx."'>[".$meeting_name."] ".$meeting_addr."";
+}
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+<script type="text/javascript">
+<!--
+
+	function week_guide1(week_idx, week_guide1) {
+		var str_guide1 = "<?=$str_guide1 ?>";
+
+		$("#week_guide1_"+week_idx).append(str_guide1);
+		$("#week_guide1_"+week_idx).val(week_guide1);
+
+	}
+	
+	function week_guide2(week_idx, week_guide2) {
+		var str_guide2 = "<?=$str_guide2 ?>";
+
+		$("#week_guide2_"+week_idx).append(str_guide2);
+		$("#week_guide2_"+week_idx).val(week_guide2);
+	}
+
+	function week_service(week_idx, week_service) {
+		var str_service = "<?=$str_service ?>";
+
+		$("#week_service_"+week_idx).append(str_service);
+		$("#week_service_"+week_idx).val(week_service);
+
+	}
+
+	function week_location(week_idx, week_location) {
+		var str_location = "<?=$str_location ?>";
+
+		$("#week_location_"+week_idx).append(str_location);
+		$("#week_location_"+week_idx).val(week_location);
+	}
+
+//-->
+</script>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="#"><strong>기본계획관리</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">
+	  
+		  <div class="row marginbottom10">
+
+			<div class="col-sm-12">
+			  <ul class="nav nav-pills">
+				<li<?=($req_week_yoil=="1")?" class=\"active\"":"" ?>><a href="?week_yoil=1">월</a></li>
+				<li<?=($req_week_yoil=="2")?" class=\"active\"":"" ?>><a href="?week_yoil=2">화</a></li>
+				<li<?=($req_week_yoil=="3")?" class=\"active\"":"" ?>><a href="?week_yoil=3">수</a></li>
+				<li<?=($req_week_yoil=="4")?" class=\"active\"":"" ?>><a href="?week_yoil=4">목</a></li>
+				<li<?=($req_week_yoil=="5")?" class=\"active\"":"" ?>><a href="?week_yoil=5">금</a></li>
+				<li<?=($req_week_yoil=="6")?" class=\"active\"":"" ?>><a href="?week_yoil=6">토</a></li>
+				<li<?=($req_week_yoil=="7")?" class=\"active\"":"" ?>><a href="?week_yoil=7">일</a></li>
+			  </ul>
+			</div>
+		  </div>
+
+<?
+$sql="SELECT * FROM week_list WHERE 1=1 ";
+$sql.=" and week_yoil='$req_week_yoil'";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$week_idx=$rs[week_idx];
+	$week_yoil=$rs[week_yoil];
+	$week_ampm=$rs[week_ampm];
+	$week_time=$rs[week_time];
+	$week_guide1=$rs[week_guide1];
+	$week_guide2=$rs[week_guide2];
+	$week_service=$rs[week_service];
+	$week_location=$rs[week_location];
+?>
+
+			<div id="week_idx_<?=$week_idx ?>" class="marginbottom15">
+				
+				<div class="form-inline">
+					<div class="form-group">
+					  <label for="name">모임시간:</label>
+						<label class="radio-inline"><input type="radio" id="week_ampm_<?=$week_idx ?>" name="week_ampm_<?=$week_idx ?>" value="m" <?=($week_ampm=="m")?" checked":"" ?>> 오전</label>
+						<label class="radio-inline"><input type="radio" id="week_ampm_<?=$week_idx ?>" name="week_ampm_<?=$week_idx ?>" value="a" <?=($week_ampm=="a")?" checked":"" ?>> 오후</label>
+						<label class="radio-inline"><input type="radio" id="week_ampm_<?=$week_idx ?>" name="week_ampm_<?=$week_idx ?>" value="e" <?=($week_ampm=="e")?" checked":"" ?>> 저녁</label>
+					</div>
+				</div>
+				<div class="form-inline">
+					<div class="form-group">
+					  <label for="name">모임시간:</label>
+						<input type="time" class="form-control" name="week_time_<?=$week_idx ?>" id="week_time_<?=$week_idx ?>" value="<?=$week_time ?>" placeholder="09:30">
+					</div>
+				</div>
+
+				<div class="form-inline">
+					<div class="form-group">
+					  <label for="name">인&nbsp;&nbsp;도&nbsp;&nbsp;자:</label>
+					  <select class="form-control" name="week_guide1_<?=$week_idx ?>" id="week_guide1_<?=$week_idx ?>">
+					  </select>
+					</div>
+
+					<div class="form-group">
+					  <label for="name">보 조 자:</label>
+					  <select class="form-control" name="week_guide2_<?=$week_idx ?>" id="week_guide2_<?=$week_idx ?>">
+					  </select>
+					</div>
+					
+					<div class="form-group">
+					  <label for="name">봉사형태:</label>
+					  <select class="form-control" name="week_service_<?=$week_idx ?>" id="week_service_<?=$week_idx ?>">
+					  </select>
+					</div>
+				</div>
+
+				<div class="form-inline">
+					<div class="form-group">
+					  <label for="name">모임장소:</label>
+					  <select class="form-control" name="week_location_<?=$week_idx ?>" id="week_location_<?=$week_idx ?>">
+					  </select>
+					</div>
+				</div>
+
+				<div class="admin-week-save-complete" id="week_save_complete_<?=$week_idx ?>" class="pull-left" ></div>
+
+				<div class="form-group text-right">
+					<button type="button" class="btn btn-default btn-sm" id="btn-add" onclick="week_save('<?=$week_idx ?>');"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+					<button type="button" class="btn btn-default btn-sm" id="btn-del" onclick="week_del('<?=$week_idx ?>');"><span class="glyphicon glyphicon-trash"></span> 삭제</button>
+				</div>
+			</div>
+
+	<script>
+	week_guide1('<?=$week_idx ?>','<?=$week_guide1 ?>');
+	week_guide2('<?=$week_idx ?>','<?=$week_guide2 ?>');
+	week_service('<?=$week_idx ?>','<?=$week_service ?>');
+	week_location('<?=$week_idx ?>','<?=$week_location ?>');
+	</script>
+
+<?
+}
+?>
+
+			<button type="button" class="btn btn-success" id="btn-add"  onclick="week_add();"><span class="glyphicon glyphicon-plus"></span> 추가</button>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function week_add() {
+
+		var week_yoil = "<?=$req_week_yoil ?>";
+
+		$.ajax({
+			type: "post",
+			url: "week_work.php",
+			data: "work=week_add&week_yoil="+week_yoil,
+			success: function (msg) {
+				location.href="week_list.html?week_yoil="+week_yoil;
+			}
+		});
+	}
+
+	function week_save(week_idx) {
+		var week_ampm = $("#week_ampm_"+week_idx+":checked").val();
+		var week_time = $("#week_time_"+week_idx).val();
+		var week_guide1 = $("#week_guide1_"+week_idx).val();
+		var week_guide2 = $("#week_guide2_"+week_idx).val();
+		var week_service = $("#week_service_"+week_idx).val();
+		var week_location = $("#week_location_"+week_idx).val();
+		var week_save_complete = $("#week_save_complete_"+week_idx);
+
+		$.ajax({
+			type: "post",
+			url: "week_work.php",
+			data: "work=week_save&week_idx=" + week_idx + "&week_ampm=" + week_ampm + "&week_time=" + week_time + "&week_guide1=" + week_guide1 + "&week_guide2=" + week_guide2 + "&week_service=" + week_service + "&week_location=" + week_location,
+			success: function (msg) {
+				week_save_complete.html("저장완료!!").fadeIn();
+				week_save_complete.fadeOut();
+			}
+		});
+	}
+
+	function week_del(week_idx) {
+
+		if (!confirm("삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "week_work.php",
+			data: "work=week_del&week_idx=" + week_idx,
+			success: function (msg) {
+				$("#week_idx_" + week_idx).remove();
+			}
+		});
+	}	
+//-->
+</script>

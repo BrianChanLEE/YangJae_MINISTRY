@@ -1,0 +1,167 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+$m_mgr = $_SESSION['m_mgr'];  //1-관리자1   2-관리자2   3-인도자   4-보조자
+$m_position = $_SESSION['m_position']; //1-전도인   2-봉사의종   3-장로   4-순회감독자
+
+
+$_SESSION['new_notice']="yes";
+
+$req_page=$_REQUEST["page"];
+$req_elder=$_REQUEST["elder"];
+
+
+if (!$req_page || $req_page < 0){
+  $ipage=1;	//$page값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 0으로 처리
+}else{
+  $ipage=$req_page;
+}
+
+if (!$req_elder || $req_elder<0){
+	$req_elder="0";
+}
+
+
+if ($req_elder=="1"){
+	if ($m_position>=3){
+		
+	}else{
+		echo "<script>location.href='bbs_list.html'</script>";
+		exit;
+	}
+}
+
+
+$wsql=" and bbs_isElder='".$req_elder."'";
+
+
+
+$sql="SELECT COUNT(*) FROM bbs WHERE 1=1 ";
+if ($wsql!=""){
+	$sql.=$wsql;
+}
+$result_count=mysql_query($sql);
+$result_row=mysql_fetch_row($result_count);
+$total_row=$result_row[0];
+
+$page_size=10;		//한 페이지에 보여질 게시물의 수
+$page_list_size=10; //페이지 나누기에 표시될 페이지의 수
+
+
+
+
+
+$sql="SELECT * FROM bbs WHERE 1=1 ";
+if ($wsql!=""){
+	$sql.=$wsql;
+}
+$iipage=(int)(($ipage-1)*$page_size);
+$sql.=" ORDER BY bbs_isNotice desc, bbs_editdate desc LIMIT $iipage, $page_size";
+$result=mysql_query($sql);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="bbs_list.html"><strong>공지사항</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+
+    <div class="page-home">
+      <div class="container">
+	  
+		  <div class="row">
+
+			<div class="col-sm-6 col-xs-8">
+			  <ul class="nav nav-tabs">
+				<li<?=($req_elder=="0")?" class=\"active\"":"" ?>><a href="?elder=0">공지</a></li>
+				<?if ($m_position>=3 || strpos($m_mgr,"1")>-1){?>
+				<li<?=($req_elder=="1")?" class=\"active\"":"" ?>><a href="?elder=1">장로</a></li>
+				<?}?>
+				<li<?=($req_elder=="2")?" class=\"active\"":"" ?>><a href="?elder=2">구역</a></li>
+			  </ul>
+			</div>
+		  </div>
+
+      </div>
+
+	  <div class="container">
+
+          <div class="row">
+            <table class="table table-responsive table-hover">
+              <tbody>
+			<?
+			//리스트 시작
+			$num=$total_row-(($ipage/10)*10); //한페이지에 임의의 목록이 나오는 경우 계산방식
+			while($rs=mysql_fetch_array($result)){
+				$bbs_idx=$rs["bbs_idx"];
+				$bbs_subject=$rs["bbs_subject"];
+				$bbs_content=$rs["bbs_content"];
+				$bbs_isNotice=$rs["bbs_isNotice"];
+				$bbs_regdate=$rs["bbs_regdate"];
+				$bbs_editdate=$rs["bbs_editdate"];
+
+				if ($bbs_isNotice==0){
+					$str_notice="&nbsp;<span class='label label-success'>일반</span>";
+				}else{
+					$str_notice="&nbsp;<span class='label label-danger'>중요</span>";
+				}
+			?>
+                <tr>
+                  <td><?=$str_notice ?></td>
+                  <td><div class="bbs-text-overflow bbs-text-overflow-width"><a href="bbs_view.html?bbs_idx=<?=$bbs_idx ?>"><?=$bbs_subject ?></a>
+					<?
+					$yy=date("Y", time());
+					$mm=date("m", time());
+					$dd=date("d", time())-1;
+					$today=date("Y-m-d", mktime(0,0,0, $mm, $dd, $yy));
+					// echo $today."<br>";
+
+					$regdate2=explode("-", $bbs_editdate);
+					$yy2=$regdate2[0];
+					$mm2=$regdate2[1];
+					$dd2=$regdate2[2];
+					$regdate3=date("Y-m-d", mktime(0,0,0, $mm2, $dd2, $yy2));
+					// echo $regdate3;
+
+					if($regdate3>$today){
+					?>
+					<span class="label label-danger">New</span>
+					<?}?>				  
+				  </div></td>
+                  <td align="right"><?=substr($bbs_editdate, 0, 10) ?></td>
+                </tr>
+			<?
+			$num--;
+			}//end while
+			?>
+
+              </tbody>
+            </table>
+          </div>
+
+
+		<?
+		paging($ipage, $total_row, $page_size, $page_list_size, $query_string);
+		?>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>

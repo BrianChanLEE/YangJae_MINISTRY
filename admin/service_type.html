@@ -1,0 +1,213 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="#"><strong>봉사형태관리</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">	  
+
+		<div class="row col-sm-12 marginbottom10">
+		 - 기본값은 '수정/삭제' 할 수 없으며, 새로 추가한 항목에 대해서만 '수정/삭제'가 가능합니다.
+	    </div>
+
+		<div id="sortable" class="row col-sm-12 marginbottom10">
+<?
+$sql="SELECT * FROM db_service_type ORDER BY service_rank";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$service_idx=$rs[service_idx];
+	$service_type=$rs[service_type];
+	$service_rank=$rs[service_rank];
+
+	if ($service_idx > 5){
+		$edit_disabled = "";
+	}else{
+		$edit_disabled = "disabled";
+	}
+?>
+
+
+		<div class="btn-group" id="service_idx_<?=$service_idx ?>">
+
+		  <button type="button" class="btn btn-default btn-primary3"><?=$service_type ?></button>
+		  <button type="button" class="btn btn-default dropdown-toggle dropdown-toggle2 <?=$edit_disabled ?>" data-toggle="dropdown">
+			<span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu" role="menu">
+			<li><a href="#" onclick="service_modify('<?=$service_idx ?>', '<?=$service_type ?>')" ><span class="glyphicon glyphicon-pencil"></span> 수정</a></li>
+			<li><a href="#" onclick="service_del('<?=$service_idx ?>')"><span class="glyphicon glyphicon-trash"></span> 삭제</a></li>
+		  </ul>
+		  
+		  <div class="admin-map-move-icon text-right hidden"><span class="glyphicon glyphicon-move"></span></div>
+		  <input type="hidden" name="rank_service_idx_<?=$service_idx ?>" id="rank_service_idx_<?=$service_idx ?>" value="<?=$service_idx ?>">
+		</div>
+<?
+}
+?>
+		</div>
+			<button type="button" class="btn btn-success" id="btn-add"  onclick="service_add();"><span class="glyphicon glyphicon-plus"></span> 추가</button>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	$('#sortable').sortable({
+
+		revert: true,
+		update: function (event, ui) {
+
+			var val = $(this).sortable('toArray');
+			var n = 0;
+			var num = 0;
+			var arrIdx = "", arrRank = "";
+
+			for (var i = 0; i < val.length; i++) {
+				n = ++num;
+				$('#rank_' + val[i]).val(n);
+				if (i > 0) {
+					arrRank += ",";
+				}
+				arrRank += n;
+
+                idx = val[i].replace('service_idx_', '');
+				if (i > 0) {
+					arrIdx += ",";
+				}
+				arrIdx += idx;
+			}
+
+			sort_auto(arrIdx, arrRank);
+		}
+	});	
+
+
+	function sort_auto(idx, rank) {
+
+		$.ajax({
+			type: "post",
+			url: "service_type_work.php",
+			data: "work=service_sort&idx=" + idx + "&rank=" + rank,
+			success: function (msg) {
+				location.reload();
+			},
+			error: function (request, status, error) {
+				//alert(status + ' : ' + error);
+			}
+		});
+	}
+//-->
+</script>
+<script type="text/javascript">
+<!--
+	function service_add() {
+
+		$.ajax({
+			type: "post",
+			url: "service_type_work.php",
+			data: "work=service_add",
+			success: function (msg) {
+				location.href="service_type.html";
+			}
+		});
+	}
+
+	function service_modify(service_idx, service_type) {
+
+		$("#service_idx").val(service_idx);
+		$("#service_type").val(service_type);
+        $("#myModal").modal();
+	}	
+
+	function service_save() {
+
+		var service_idx = $("#service_idx").val();
+		var service_type = $("#service_type").val();
+
+		$.ajax({
+			type: "post",
+			url: "service_type_work.php",
+			data: "work=service_save&service_idx=" + service_idx + "&service_type=" + service_type,
+			success: function (msg) {
+				location.href="service_type.html";
+			}
+		});
+	}	
+
+	function service_del(service_idx) {
+
+		if (!confirm("삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "service_type_work.php",
+			data: "work=service_del&service_idx=" + service_idx,
+			success: function (msg) {
+				if (msg!=""){
+					alert(msg);
+					return;
+				}else{
+					$("#service_idx_" + service_idx).remove();
+				}
+			}
+		});
+	}	
+//-->
+</script>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">수정</h4>
+        </div>
+        <div class="modal-body">
+		<form role="form">
+          <input type="hidden" name="service_idx" id="service_idx">
+          <input type="text" name="service_type" id="service_type" placeholder="봉사형태" class="form-control">
+		</form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal" onclick="service_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>

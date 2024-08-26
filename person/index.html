@@ -1,0 +1,113 @@
+<?
+include "../include/db_connect.php";  // 데이터베이스 연결 스크립트를 포함
+include "../include/function.php";  // 공통 함수들을 포함
+
+session_check();  // 사용자가 로그인되어 있는지 확인하는 함수 호출
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>  // 공통 헤더 파일을 포함하여 메타 태그, 스타일 시트 등을 설정
+</head>
+<body> 
+
+    <!-- 주석 처리된 네비게이션 바 코드. 필요에 따라 활성화 가능 -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>개인구역</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+
+<?
+$m_idx = $_SESSION['m_idx'];  // 현재 세션에서 'm_idx' 값을 가져와 변수에 저장
+
+// 특정 멤버의 미완료된 구역 정보를 조회하는 SQL 쿼리 작성
+$sql = "
+	SELECT *
+		,(SELECT ministry_start_date FROM ministry_list WHERE map_sub_idx = T.map_sub_idx) AS ministry_start_date
+		,(SELECT ministry_end_date FROM ministry_list WHERE map_sub_idx = T.map_sub_idx) AS ministry_end_date
+	FROM (
+		SELECT *,
+			(SELECT ministry_member_idx FROM ministry_list WHERE map_sub_idx = a.map_sub_idx AND ministry_date IS NULL) AS aa
+		FROM map_normal_sub a
+	) T
+	WHERE aa = '$m_idx'";
+
+$result = mysql_query($sql);  // SQL 쿼리를 실행하고 결과를 변수에 저장
+$num_rows = mysql_num_rows($result);  // 결과의 행 수를 계산하여 변수에 저장
+?>
+
+    <div class="page-home">
+      <div class="container">	  
+<?
+if ($num_rows > 0) {  // 조회된 구역이 있는 경우
+?>
+		<div class="row panel panel-success">
+		  <div class="panel-heading">개인구역</div>  <!-- 패널 헤더 -->
+		  <div class="panel-body">구역을 선택하여 봉사를 시작하세요.</div>  <!-- 패널 본문 -->
+		</div>
+<?
+} else {  // 조회된 구역이 없는 경우
+?>	
+		<div class="row panel panel-success">
+		  <div class="panel-heading">개인구역</div>  <!-- 패널 헤더 -->
+		  <div class="panel-body">구역이 없습니다.</div>  <!-- 패널 본문 -->
+		</div>
+<?
+}
+?>
+		<div class="row">
+			<table class="table table-hover">  <!-- 테이블 시작, Bootstrap 스타일 사용 -->
+
+<?
+while ($rs = mysql_fetch_array($result)) {  // 조회된 각 구역에 대해 반복
+
+	$map_sub_idx = $rs['map_sub_idx'];
+	$map_sub_no = $rs['map_sub_no'];
+	$map_sub_info = $rs['map_sub_info'];
+	$map_sub_cnt = $rs['map_sub_cnt'];
+	$map_sub_addr = $rs['map_sub_addr'];
+	$map_sub_member_idx = $rs['map_sub_member_idx'];
+	$ministry_start_date = $rs['ministry_start_date'];
+	$ministry_end_date = $rs['ministry_end_date'];
+
+	// 클릭 시 구역 목록 페이지로 이동하는 링크 설정
+	$href2 = "onclick=\"location.href='person_ministry_list.html?map_sub_idx=".$map_sub_idx."'\"";
+	?>
+				<tr style="cursor:pointer;" <?=$href2 ?>>  <!-- 테이블 행 시작, 클릭 가능한 링크 설정 -->
+					<td><div class="person-map-sub-no"><?=$map_sub_no ?></div></td>  <!-- 구역 번호 표시 -->
+					<td><div class="person-map-sub-info">
+						<?if ($map_sub_info != "") { ?>  <!-- 구역 정보가 있는 경우 -->
+						[ <?=$map_sub_info ?> ]
+						<?} else {?>  <!-- 구역 정보가 없는 경우 -->
+						[ 구역명없음 ]
+						<?}?>
+						</div>			
+						시작일 : <?=$ministry_start_date ?> /  <!-- 시작일 표시 -->
+						종료일 : <?=$ministry_end_date ?>  <!-- 종료일 표시 -->
+					</td>
+				</tr>
+<?
+}
+?>
+		
+			</table>
+		</div>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>  // 공통 푸터 파일을 포함하여 페이지 끝 부분을 설정
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>  <!-- Bootstrap JavaScript 파일 로드 -->
+<script type="text/javascript">
+<!--
+
+//-->
+</script>

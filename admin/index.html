@@ -1,0 +1,87 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+
+$sql="SELECT * FROM congregation WHERE cong_idx='1'";
+$result=mysql_query($sql);
+$rs = mysql_fetch_array($result, MYSQL_ASSOC);
+$cong_mysql=$rs["cong_mysql"];
+
+$m_mgr = $_SESSION['m_mgr'];  //1-관리자1   2-관리자2   3-인도자   4-보조자
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/"><strong>관리자</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">
+	  <div class="admin-menu">
+		<ul>
+
+<?if (mgr_check("1,2")){?>
+		  <a href="minister_list.html"><li>전도인<br>관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="map_normal.html?map_service=normal"><li>구역<br>관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="map_record.html"><li>구역임명<br>기록(S-13)</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="week_list.html"><li>기본<br>계획관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="month_list.html"><li>추가<br>계획관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="meeting_location.html"><li>봉사모임<br>장소관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="service_type.html"><li>봉사형태<br>관리</li></a>
+<?}?>
+<?if (mgr_check("1")){?>
+		  <a href="bbs_list.html"><li>공지사항<br>관리</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="stat_minister.html"><li>통계<br>확인</li></a>
+<?}?>
+<?if (mgr_check("1,2")){?>
+		  <a href="<?=JW_MANUAL ?>" target="_blank"><li>매뉴얼<br>보기</li></a>
+<?}?>
+<?if (mgr_check("1")){?>
+		  <a href="reset.html"><li>리셋<br>&nbsp;</li></a>
+<?}?>
+<?if (mgr_check("1")){?>
+		  <a href="site_option.html"><li>사이트<br>설정<br></li></a>
+<?}?>
+		</ul>
+	  </div>
+      </div>
+    </div>
+
+
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>

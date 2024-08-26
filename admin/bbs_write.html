@@ -1,0 +1,89 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+<script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
+<!-- <script type="text/javascript" src="//cdn.ckeditor.com/4.7.3/full-all/ckeditor.js"></script> -->
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="/admin/bbs_list.html">공지사항관리</a> > <a href="#"><strong>등록</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+    <div class="page">
+      <div class="container">
+	  
+		  <form name="form1" action="bbs_write_save.php" method="post" onsubmit="return valid()">
+
+			<div class="form-group">
+			  <label for="pwd">중요:</label>
+			<label class="radio-inline"><input type="checkbox" id="bbs_isNotice" name="bbs_isNotice" value="1"> </label>
+			</div>
+			<div class="form-group">
+			  <label for="pwd">구분:</label>
+			<label class="checkbox-inline"><input type="radio" name="bbs_isElder" value="0" checked> 공지</label>
+			<label class="checkbox-inline"><input type="radio" name="bbs_isElder" value="1"> 장로</label>
+			<label class="checkbox-inline"><input type="radio" name="bbs_isElder" value="2"> 구역</label>
+			</div>
+			<div class="form-group">
+			  <input type="text" class="form-control" name="bbs_subject" id="bbs_subject" placeholder="제목">
+			</div>
+			<div class="form-group">
+				<textarea name="bbs_content" rows="5" cols="60"></textarea>
+			</div>
+
+			<button type="submit" class="btn btn-success" id="btn-save"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+			<a href="/admin/bbs_list.html" class='btn btn-default btn-small'><span class="glyphicon glyphicon-th-list"></span> 목록</a>
+
+
+		  </form>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function valid() {
+		
+		var bbs_subject=$("#bbs_subject").val().replace(/ /g, '');
+		if(bbs_subject==""){
+			$("#bbs_subject").val("");
+			$("#bbs_subject").focus();
+			$("#bbs_subject").attr("placeholder","제목을 입력하세요");
+			return false;
+		}
+
+	}
+
+	$(function () {
+		CKEDITOR.config.width = '100%';
+		CKEDITOR.config.height = 350;
+		CKEDITOR.replace('bbs_content', { language: 'ko' });	
+	});
+
+//-->
+</script>

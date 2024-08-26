@@ -1,0 +1,162 @@
+<?
+$m_idx=$_SESSION['m_idx'];  // 현재 세션에서 'm_idx' 값을 가져와 변수에 저장
+
+// 최근 1일 이내에 편집된 게시물 중 'bbs_isElder'가 0인 항목을 선택하는 쿼리
+$sql="SELECT * FROM bbs where bbs_isElder=0 and bbs_editdate >  date_add(now(), interval -1 day)";
+$result=mysql_query($sql);  // SQL 쿼리를 실행하고 결과를 변수에 저장
+$num_rows = mysql_num_rows($result);  // 결과의 행 수를 계산하여 변수에 저장
+$notice_num = $num_rows;  // 새로 작성된 공지사항의 수를 'notice_num'에 저장
+
+$icon_notice="icon-notice";  // 공지사항 아이콘 기본 설정
+if ($notice_num>0) {  // 새로운 공지사항이 있으면
+	$icon_notice="icon-notice-new";  // 공지사항 아이콘을 새 공지사항 아이콘으로 변경
+}
+
+// 'ministry_list' 테이블에서 특정 멤버의 아직 할당되지 않은 항목을 조회하는 쿼리
+$sql="SELECT * FROM ministry_list ";
+$sql.=" WHERE 1=1 AND ministry_member_idx='$m_idx' and ministry_date is null";
+
+$result=mysql_query($sql);  // SQL 쿼리를 실행하고 결과를 변수에 저장
+$num_rows = mysql_num_rows($result);  // 결과의 행 수를 계산하여 변수에 저장
+$person_map_num = $num_rows;  // 개인 구역 수를 'person_map_num'에 저장
+
+$selfpage=$_SERVER['PHP_SELF'];  // 현재 페이지의 파일 경로를 'selfpage' 변수에 저장
+?>
+	<footer class="footer ">  <!-- 푸터 영역 시작 -->
+	  <div class="menu container">  <!-- 메뉴를 포함한 컨테이너 -->
+		<ul>  <!-- 메뉴 리스트 시작 -->
+          <li class="menu-li">
+            <!-- 봉사일정 메뉴 아이템, 현재 페이지가 '/home/' 인지 확인하여 이미지 및 텍스트의 상태를 변경 -->
+            <a href="/home/"><img src="/img/icon-schedule<?=strpos($selfpage, '/home/')>-1?'-over':'' ?>.png" title="봉사일정" alt="봉사일정">
+            <p<?=strpos($selfpage, '/home/')>-1?" class=\"active\"":"" ?>>봉사일정</p></a>
+          </li>
+		  <?if (site_option("tel_service_show")){?>  <!-- 전화봉사 옵션이 활성화된 경우 -->
+		  <li class="menu-li">
+            <!-- 전화봉사 메뉴 아이템 -->
+            <a href="/tel/"><img src="/img/icon-hp<?=strpos($selfpage, '/tel/')>-1?'-over':'' ?>.png" title="전화봉사" alt="전화봉사">
+            <p<?=strpos($selfpage, '/tel/')>-1?" class=\"active\"":"" ?>>전화봉사</p></a>
+          </li>
+		  <?}?>
+		  <?if ($person_map_num>0 && $m_idx!=""){?>  <!-- 개인 구역이 있고, 'm_idx'가 존재하는 경우 -->
+		  <li class="menu-li">
+            <!-- 개인구역 메뉴 아이템 -->
+            <a href="/person/"><img src="/img/icon-person<?=strpos($selfpage, '/person/')>-1?'-over':'' ?>.png" title="개인구역" alt="개인구역">
+            <p<?=strpos($selfpage, '/person/')>-1?" class=\"active\"":"" ?>>개인구역</p></a>
+          </li>
+		  <?}?>
+          <li class="menu-li" data-toggle="popover" title="알림" data-placement="top" data-content="새로운 공지사항이 등록되었습니다.">
+            <!-- 공지사항 메뉴 아이템, popover로 새로운 공지사항 알림 -->
+            <a href="/bbs/bbs_list.html"><img src="/img/<?=$icon_notice ?><?=strpos($selfpage, '/bbs/')>-1?'-over':'' ?>.png" title="공지사항" alt="공지사항">
+            <p<?=strpos($selfpage, '/bbs/')>-1?" class=\"active\"":"" ?>>공지사항</p></a>
+          </li>
+		  <?if (mgr_check("1,2,3")){?>  <!-- 관리자 권한이 있는 경우 -->
+          <li class="menu-li">
+            <!-- 인도자 메뉴 아이템 -->
+            <a href="/guide/"><img src="/img/icon-map<?=strpos($selfpage, '/guide/')>-1?'-over':'' ?>.png" title="인도자" alt="인도자">
+            <p<?=strpos($selfpage, '/guide/')>-1?" class=\"active\"":"" ?>>인도자</p></a>
+          </li>
+		  <?}?>
+          <li class="menu-li">
+            <!-- 정보변경 메뉴 아이템 -->
+            <a href="/info/"><img src="/img/icon-setting2<?=strpos($selfpage, '/info/')>-1?'-over':'' ?>.png" title="정보변경" alt="정보변경">
+            <p<?=strpos($selfpage, '/info/')>-1?" class=\"active\"":"" ?>>정보변경</p></a>
+          </li>
+		  <?if (mgr_check("1,2")){?>  <!-- 특정 관리자 권한이 있는 경우 -->
+          <li class="menu-li">
+            <!-- 관리자 메뉴 아이템 -->
+            <a href="/admin/"><img src="/img/icon-setting<?=strpos($selfpage, '/admin/')>-1?'-over':'' ?>.png" title="관리자" alt="관리자">
+            <p<?=strpos($selfpage, '/admin/')>-1?" class=\"active\"":"" ?>>관리자</p></a>
+          </li>
+		  <?}?>
+		  <?if (site_option("sos_show")){?>  <!-- 긴급전화 옵션이 활성화된 경우 -->
+          <li class="menu-li">
+            <!-- 긴급전화 메뉴 아이템 -->
+            <a href="#" id="sos"><img src="/img/icon-sos.png" title="긴급전화" alt="긴급전화"><p>긴급전화</p></a>
+          </li>
+		  <?}?>
+		</ul>  <!-- 메뉴 리스트 끝 -->
+      </div>
+    </footer>  <!-- 푸터 영역 끝 -->
+
+<!-- iOS에서 standalone 모드일 때 외부 링크를 방지하는 스크립트 -->
+<script type="text/javascript">
+(function(a, b, c) {
+    if (c in b && b[c]) {  // standalone 모드인지 확인
+        var d, e = a.location, f = /^(a|html)$/i;
+
+		a.addEventListener("click", function(a) {  // 클릭 이벤트 리스너 추가
+			d = a.target;
+
+            while (!f.test(d.nodeName)) {  // a 또는 html 요소가 나올 때까지 부모 요소로 이동
+				d = d.parentNode;
+			}
+
+			if (d=="") {  // 요소가 없을 경우
+				return;
+			}
+
+			// 외부 링크가 아닌 경우 현재 페이지 내에서 링크 이동을 허용
+			"href" in d && (d.href.indexOf("http") || ~d.href.indexOf(e.host)) && (a.preventDefault(), e.href = d.href)
+		}, !1)
+	}
+})(document, window.navigator, "standalone")
+</script>
+
+<script type="text/javascript">
+	<?
+	// 인도자 중에서 긴급 호출 가능한 사람을 조회하는 쿼리
+	$sql="SELECT * FROM member WHERE m_mgr like '%1%' and m_sos_call='1'";
+	$result=mysql_query($sql);
+	$num=mysql_num_rows($result);
+	$rs = mysql_fetch_array($result);
+
+	$m_name=$rs['m_name'];  // 인도자의 이름을 저장
+	$m_hp=$rs['m_hp'];  // 인도자의 전화번호를 저장
+
+	if ($num==0){  // 긴급 호출 가능한 인도자가 없을 경우
+	?>
+	$("#sos").click(function (){
+		alert("인도자에게 직접 연락하세요!!");  // 경고 메시지 출력
+	});
+	<?
+	}else{  // 긴급 호출 가능한 인도자가 있을 경우
+	?>
+	$("#sos").click(function (){
+		
+		var m_name="<?=$m_name ?>";  // 인도자 이름을 변수에 저장
+		var m_hp="<?=$m_hp ?>";  // 인도자 전화번호를 변수에 저장
+
+		if (confirm("'"+m_name+"형제'에게 긴급전화를 거시겠습니까?")==true)  // 확인 대화 상자 표시
+		{
+			$("#sos").attr("href","tel:"+m_hp);  // 확인을 누르면 전화번호 링크로 설정
+		}else{
+			$("#sos").attr("href","#");  // 취소를 누르면 링크를 해제
+		}
+	});
+	<?
+	}
+	?>
+
+$(document).ready(function(){
+	
+	var footer_menu_cnt = $(".footer li").length + 1;  // 푸터의 메뉴 개수를 계산
+	var footer_menu_width=100/footer_menu_cnt;  // 메뉴의 폭을 계산
+	footer_menu_width=Math.round(footer_menu_width);  // 폭을 반올림
+	$(".menu-li").css("width",(footer_menu_width) +'%');  // 계산된 폭을 메뉴에 적용
+
+	<?if ($notice_num>0) {?>
+	var notice_num="<?=$notice_num ?>";  // 공지사항의 개수를 변수에 저장
+	var new_notice="<?=$_SESSION['new_notice'] ?>";  // 세션에서 새로운 공지사항 여부를 확인
+
+	if (notice_num>0 && new_notice!="yes" )  // 새로운 공지사항이 있고, 아직 확인하지 않은 경우
+	{
+		$('[data-toggle="popover"]').popover('show');  // 팝오버로 알림 표시
+		setTimeout(function(){ pophide(); }, 5000);  // 5초 후 팝오버를 숨김
+	}
+
+	function pophide(){
+		$('[data-toggle="popover"]').popover('hide');  // 팝오버를 숨기는 함수
+	}
+	<?}?>
+});
+</script> 오류 개선

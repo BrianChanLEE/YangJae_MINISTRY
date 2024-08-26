@@ -1,0 +1,583 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+$req_map_idx=$_REQUEST["map_idx"];
+$req_map_service=$_REQUEST["map_service"];
+$req_map_sub_idx=$_REQUEST["map_sub_idx"];
+$req_map_list_idx=$_REQUEST["map_list_idx"];
+
+
+$sql="SELECT * FROM map_normal_sub WHERE map_sub_idx='$req_map_sub_idx'";
+$result_type=mysql_query($sql);
+$rs=mysql_fetch_array($result_type);
+$map_sub_no=$rs[map_sub_no];
+$map_sub_info=$rs[map_sub_info];
+$map_sub_cnt=$rs[map_sub_cnt];
+$map_sub_addr=$rs[map_sub_addr];
+
+$map_sub_no=strtolower($map_sub_no);
+$map_sub_no=str_replace("<br>"," ",$map_sub_no);
+
+
+//구역형태
+$str_service="";
+$sql="SELECT * FROM db_house_type";
+$result=mysql_query($sql);
+
+$str_service.="<option value='0'>구역형태";
+
+while($rs=mysql_fetch_array($result)){
+	$house_idx=$rs[house_idx];
+	$house_type=$rs[house_type];
+
+	$str_service.="<option value='".$house_idx."'>".$house_type."";
+}
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/map_normal_sub.html?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="/admin/map_normal.html?map_service=<?=$req_map_service ?>">구역관리</a> > <a href="/admin/map_normal_sub.html?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>"><?=service_name($req_map_service); ?></a> > <a href="#"><strong>상세</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">
+	  
+
+    <div class="panel panel-success">
+      <div class="panel-heading"><?=str_replace("<br>","",$map_sub_no) ?> : <?=$map_sub_info ?></div>
+      <div class="panel-body"><?=$map_sub_addr ?>
+	  <div class="pull-right">
+	  <button type="button" class="btn btn-default btn-sm " id="btn-map" onclick="map_view('<?=$req_map_sub_idx ?>', '<?=$map_sub_info ?>', '<?=$map_sub_addr ?>')"><span class="glyphicon glyphicon-map-marker"></span> 지도보기</button>
+	  <a class="btn btn-default btn-sm " id="btn-map-set" target="_blank" href="map_normal_set.html?map_sub_idx=<?=$req_map_sub_idx ?>"><span class="glyphicon glyphicon-cog"></span> 지도설정</a>
+	  </div>
+	  </div>
+    </div>
+
+		<div id="sortable">
+
+			<div id="map_list_idx_0" class="hidden">
+			  <input type="text" name="rank_map_list_idx_0" id="rank_map_list_idx_0" value="0">
+			</div>
+<?
+$sql="SELECT * FROM map_normal_list WHERE 1=1 ";
+$sql.=" and map_sub_idx='$req_map_sub_idx'";
+$sql.=" order by map_list_rank";
+$result=mysql_query($sql);
+
+$aa="";
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_list_idx=$rs[map_list_idx];
+	$map_list_line=$rs[map_list_line];
+	$map_list_road=$rs[map_list_road];
+	$map_list_road_no=$rs[map_list_road_no];
+	$map_list_floor=$rs[map_list_floor];
+	$map_list_info=$rs[map_list_info];
+	$map_list_rank=$rs[map_list_rank];
+	$map_list_house_idx=$rs[map_list_house_idx];
+
+	if ($map_list_line=="1"){
+		$map_list_line_checked="checked";
+	}else{
+		$map_list_line_checked="";
+	}
+?>
+
+			<div id="map_list_idx_<?=$map_list_idx ?>" class="map_list_idx marginbottom15">
+				
+			  <input type="hidden" name="rank_map_list_idx_<?=$map_list_idx ?>" id="rank_map_list_idx_<?=$map_list_idx ?>" value="<?=$map_list_idx ?>">
+					
+			     <div class="checkbox">
+					<label><input type="checkbox"  class="" name="map_list_line_<?=$map_list_idx ?>" id="map_list_line_<?=$map_list_idx ?>" <?=$map_list_line_checked ?> onclick="map_save('<?=$map_list_idx ?>');">구분선 <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="top" title="집과 집사이를 구분하기 위한 '구분선' 설정"></span></label>
+			    </div>
+
+				<div class="form-inline">
+					<div class="form-group">
+					  <input type="text" class="form-control<?if ($req_map_service=='apt'){?> hidden<?}?>" name="map_list_road_<?=$map_list_idx ?>" id="map_list_road_<?=$map_list_idx ?>" placeholder="길이름" value="<?=$map_list_road ?>">
+					  <input type="text" class="form-control<?if ($req_map_service=='apt'){?> hidden<?}?>" name="map_list_road_no_<?=$map_list_idx ?>" id="map_list_road_no_<?=$map_list_idx ?>" placeholder="건물번호" value="<?=$map_list_road_no ?>">
+					  <input type="text" class="form-control" name="map_list_floor_<?=$map_list_idx ?>" id="map_list_floor_<?=$map_list_idx ?>" placeholder="층" value="<?=$map_list_floor ?>">
+					  <input type="text" class="form-control" name="map_list_info_<?=$map_list_idx ?>" id="map_list_info_<?=$map_list_idx ?>" placeholder="이름/호" value="<?=$map_list_info ?>">
+					  <select name="map_list_house_idx_<?=$map_list_idx ?>" id="map_list_house_idx_<?=$map_list_idx ?>" class="form-control">
+					  </select>
+					</div>
+				</div>
+
+				<div class="form-group text-right">
+					<button type="button" class="btn btn-info btn-sm " onclick="move('<?=$req_map_sub_idx ?>','<?=$map_list_idx ?>','<?=$map_list_rank ?>')">
+					  <span class="glyphicon glyphicon-move" aria-hidden="true"></span> 이동
+					</button>
+					<!-- <button type="button" class="btn btn-default btn-sm " onclick="up('<?=$req_map_sub_idx ?>','<?=$map_list_idx ?>','<?=$map_list_rank ?>')">
+					  <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span> 위로
+					</button>
+					<button type="button" class="btn btn-default btn-sm " onclick="down('<?=$req_map_sub_idx ?>','<?=$map_list_idx ?>','<?=$map_list_rank ?>')">
+					  <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span> 아래로
+					</button> -->
+
+					<div class="admin-map-save-complete pull-left" id="map_save_complete_<?=$map_list_idx ?>"></div>
+
+					<button type="button" class="btn btn-success btn-sm" id="btn-add" onclick="map_save('<?=$map_list_idx ?>');"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+					<button type="button" class="btn btn-danger btn-sm" id="btn-del" onclick="map_del('<?=$map_list_idx ?>');"><span class="glyphicon glyphicon-trash"></span> 삭제</button>
+				</div>
+			</div>
+
+
+<?
+	$aa.="map_list_house_idx_load('$map_list_idx','$map_list_house_idx');\r\n";
+}
+?>
+		</div>
+
+			<button type="button" class="btn btn-success" id="btn-adds"  onclick="map_add('<?=$req_map_sub_idx ?>');"><span class="glyphicon glyphicon-plus"></span> 추가</button>
+			<a href="map_normal_list_excel_download.php?map_idx=<?=$req_map_idx ?>&map_sub_idx=<?=$req_map_sub_idx ?>" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt"></span> 엑셀파일 다운로드</a>
+			<button type="button" class="btn btn-warning" id="fileupload"><span class="glyphicon glyphicon-open"></span> 엑셀파일 업로드</button>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	<?=$aa ?>
+
+	function map_list_house_idx_load(map_list_idx, map_list_house_idx){
+		
+		var str_service = "<?=$str_service ?>";
+
+		$("#map_list_house_idx_"+map_list_idx).append(str_service);
+		$("#map_list_house_idx_"+map_list_idx).val(map_list_house_idx);
+	}
+
+	$('#sortable').sortable({
+
+		revert: true,
+		update: function (event, ui) {
+
+			var val = $(this).sortable('toArray');
+			var n = 0;
+			var num = 0;
+			var arrIdx = "", arrRank = "";
+
+			for (var i = 0; i < val.length; i++) {
+				n = ++num;
+				$('#rank_' + val[i]).val(n);
+				if (i > 0) {
+					arrRank += ",";
+				}
+				arrRank += n;
+
+                idx = val[i].replace('map_list_idx_', '');
+				if (i > 0) {
+					arrIdx += ",";
+				}
+				arrIdx += idx;
+			}
+
+			sort_auto(arrIdx, arrRank);
+		}
+	});
+
+
+	function sort_auto(idx, rank) {
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_list_work.php",
+			data: "work=map_sort&idx=" + idx + "&rank=" + rank,
+			success: function (msg) {
+				//location.href=window.location.href;
+			},
+			error: function (request, status, error) {
+				//alert(status + ' : ' + error);
+			}
+		});
+	}
+
+	function move(map_sub_idx, map_list_idx){
+	
+		var val = $('#sortable').sortable('toArray');
+		var n = 0;
+		var num = 0;
+		var arrIdx = "", arrRank = "";
+
+		var str="<select class='form-control' id='move_map_list_idx'>";
+
+		for (var i = 0; i < val.length; i++) {
+			n = ++num;
+
+			idx = val[i].replace('map_list_idx_', '');
+
+			map_list_road=$('#map_list_road_' + idx).val();
+			map_list_road_no=$('#map_list_road_no_' + idx).val();
+			map_list_floor=$('#map_list_floor_' + idx).val();
+			map_list_info=$('#map_list_info_' + idx).val();
+
+			if (i==0) {
+				map_str="맨위";
+			}else{
+				map_str=map_list_road+" "+map_list_road_no+" "+map_list_floor+" "+map_list_info;
+			}
+
+			sel = (map_list_idx==idx)?" selected":"";
+			str+="<option value='"+idx+"'"+sel+">"+map_str+"</option>";
+			
+		}
+
+		str+="</select>";
+
+		$("#map_normal_list").html(str);
+
+		$("#modal_map_sub_idx").val(map_sub_idx);
+		$("#modal_map_list_idx").val(map_list_idx);
+
+		$("#modalmove-title").html("<strong>이동할 위치를 선택하세요.</strong>");
+        $("#myModalMapMove").modal();
+		
+	}
+
+//	function move22(map_sub_idx, map_list_idx){
+//	
+//		$.ajax({
+//			type: "post",
+//			url: "map_normal_list_work.php",
+//			data: "work=map_normal_list&map_sub_idx="+map_sub_idx,
+//			success: function (msg) {
+//				$("#map_normal_list").html(msg);
+//			}
+//		});
+//
+//		$("#modal_map_sub_idx").val(map_sub_idx);
+//		$("#modal_map_list_idx").val(map_list_idx);
+//
+//		$("#modalmove-title").html("<strong>이동할 위치를 선택하세요.</strong>");
+//        $("#myModalMapMove").modal();
+//		
+//	}
+
+
+	function move_save(){
+
+		var map_idx="<?=$req_map_idx ?>";
+		var map_service="<?=$req_map_service ?>";
+		
+		var map_sub_idx = $("#modal_map_sub_idx").val();
+		var map_list_idx = $("#modal_map_list_idx").val();
+		var move_map_list_idx = $("#move_map_list_idx").val();
+
+		var str=$("#map_list_idx_"+map_list_idx);
+
+		$("#map_list_idx_"+move_map_list_idx).after(str.clone());
+
+		str.remove();
+
+
+		var val = $('.map_list_idx');
+		var n = 0;
+		var num = 0;
+		var arrIdx = "", arrRank = "";
+
+		val.each(function (i){
+		
+			id = this.id;
+
+			n = ++num;
+			$('#rank_' + id).val(n);
+			if (i > 0) {
+				arrRank += ",";
+			}
+			arrRank += n;
+			
+			idx=id.replace('map_list_idx_', '');
+			if (i > 0) {
+				arrIdx += ",";
+			}
+			arrIdx += idx;
+
+		});
+		
+		sort_auto(arrIdx, arrRank);
+
+		var position = $('#map_list_idx_'+move_map_list_idx).offset(); // 위치값
+
+		if (move_map_list_idx==0) {
+			position = $('#sortable').offset();
+		}
+
+		$('html,body').animate({ scrollTop : position.top - 100 }, "slow"); // 이동
+
+	}
+
+//	function move_save222(){
+//
+//		var map_idx="<?=$req_map_idx ?>";
+//		var map_service="<?=$req_map_service ?>";
+//		
+//		var map_sub_idx = $("#modal_map_sub_idx").val();
+//		var map_list_idx = $("#modal_map_list_idx").val();
+//		var move_map_list_idx = $("#move_map_list_idx").val();
+//
+//		var str=$("#map_list_idx_"+map_list_idx);
+//
+//		$("#map_list_idx_"+move_map_list_idx).after(str.clone());
+//
+//		str.remove();
+//
+//
+//		var val = $('#sortable').sortable('toArray');
+//		var n = 0;
+//		var num = 0;
+//		var arrIdx = "", arrRank = "";
+//
+//		for (var i = 0; i < val.length; i++) {
+//			n = ++num;
+//			$('#rank_' + val[i]).val(n);
+//			if (i > 0) {
+//				arrRank += ",";
+//			}
+//			arrRank += n;
+//
+//			idx = val[i].replace('map_list_idx_', '');
+//			if (i > 0) {
+//				arrIdx += ",";
+//			}
+//			arrIdx += idx;
+//		}
+//
+//		alert(arrIdx);
+//		alert(arrRank);
+//
+//		sort_auto(arrIdx, arrRank);
+//
+//		var position = $('#map_list_idx_'+move_map_list_idx).offset(); // 위치값
+//
+//		if (move_map_list_idx==0) {
+//			position = $('#sortable').offset();
+//		}
+//
+//		$('html,body').animate({ scrollTop : position.top - 100 }, "slow"); // 이동
+//
+//	}
+
+//	function up(map_sub_idx, map_list_idx, map_list_rank){
+//
+//		var map_idx="<?=$req_map_idx ?>";
+//		var map_service="<?=$req_map_service ?>";
+//
+//		$.ajax({
+//			type: "post",
+//			url: "map_normal_list_work.php",
+//			data: "work=map_up&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx+"&map_list_rank="+map_list_rank,
+//			success: function (msg) {
+//				if (msg=="yes"){
+//					location.href="map_normal_list.html?map_idx="+map_idx+"&map_service="+map_service+"&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx;
+//				}else{
+//					alert("맨위 입니다.");
+//				}
+//			}
+//		});
+//	}
+//	function down(map_sub_idx, map_list_idx, map_list_rank){
+//
+//		var map_idx="<?=$req_map_idx ?>";
+//		var map_service="<?=$req_map_service ?>";
+//
+//		$.ajax({
+//			type: "post",
+//			url: "map_normal_list_work.php",
+//			data: "work=map_down&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx+"&map_list_rank="+map_list_rank,
+//			success: function (msg) {
+//				if (msg=="yes"){
+//					location.href="map_normal_list.html?map_idx="+map_idx+"&map_service="+map_service+"&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx;
+//				}else{
+//					alert("맨아래 입니다.");
+//				}
+//			}
+//		});
+//	}
+
+
+	$(function() {
+		var map_list_idx="<?=$req_map_list_idx ?>";
+
+		if (map_list_idx=="")
+		{
+			var position = $('.map_list_idx').last().offset(); // 위치값
+			$('html,body').animate({ scrollTop : position.top-100 }, "slow"); // 이동
+		
+			$('.map_list_idx').last().addClass("box-border");
+
+//		}else{
+//			var position = $('#map_list_idx_'+map_list_idx).offset(); // 위치값
+//			$('html,body').animate({ scrollTop : position.top-100 }, "slow"); // 이동
+//		
+//			$('#map_list_idx_'+map_list_idx).last().addClass("box-border");
+		}
+
+		$('.map_list_idx').click(function(){
+			$('.map_list_idx').removeClass("box-border");
+			$(this).addClass("box-border");
+		});
+
+	});
+//-->
+</script>
+<script type="text/javascript">
+<!--
+	function map_add(map_sub_idx) {
+
+		var map_idx="<?=$req_map_idx ?>";
+		var map_service="<?=$req_map_service ?>";
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_list_work.php",
+			data: "work=map_add&map_sub_idx="+map_sub_idx,
+			success: function (msg) {
+				location.href="map_normal_list.html?map_idx="+map_idx+"&map_service="+map_service+"&map_sub_idx="+map_sub_idx;
+			}
+		});
+	}
+
+	function map_save(map_list_idx) {
+		var map_list_line = $("#map_list_line_"+map_list_idx).prop("checked")==true?"1":"0";
+		var map_list_road = $("#map_list_road_"+map_list_idx).val();
+		var map_list_road_no = $("#map_list_road_no_"+map_list_idx).val();
+		var map_list_floor = $("#map_list_floor_"+map_list_idx).val();
+		var map_list_info = $("#map_list_info_"+map_list_idx).val();
+		var map_list_house_idx = $("#map_list_house_idx_"+map_list_idx).val();
+		var map_save_complete = $("#map_save_complete_"+map_list_idx);
+
+		map_list_floor = encodeURIComponent(map_list_floor);
+		map_list_info = encodeURIComponent(map_list_info);
+
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_list_work.php",
+			data: "work=map_save&map_list_idx=" + map_list_idx + "&map_list_line=" + map_list_line + "&map_list_road=" + map_list_road + "&map_list_road_no=" + map_list_road_no + "&map_list_floor=" + map_list_floor + "&map_list_info=" + map_list_info + "&map_list_house_idx=" + map_list_house_idx,
+			success: function (msg) {
+				map_save_complete.html("저장완료!!").fadeIn();
+				map_save_complete.fadeOut();
+			}
+		});
+	}
+
+	function map_del(map_list_idx) {
+
+		if (!confirm("삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_list_work.php",
+			data: "work=map_del&map_list_idx=" + map_list_idx,
+			success: function (msg) {
+				if (msg!=""){
+					alert(msg);
+					return;
+				}else{
+					$("#map_list_idx_" + map_list_idx).remove();
+				}
+			}
+		});
+	}	
+
+	function map_view(map_sub_idx, map_sub_info, map_sub_addr){
+
+		var h=$(window).height()-150;
+
+		$("#map_iframe").attr("height",h);
+
+		var map_url="map_view.html?map_sub_idx="+map_sub_idx+"&map_sub_info="+map_sub_info+"&map_sub_addr="+map_sub_addr+"&h="+h;
+			
+		$("#modal-title").html("<strong>구역명</strong>: "+map_sub_info+", <strong>주소</strong>: "+map_sub_addr);
+		$("#map_iframe").attr("src",map_url);
+        $("#myModalMap").modal();
+
+	}
+
+	$("#fileupload").click(function (){
+		
+
+		var l = (screen.width - 600) / 2;
+
+		var features = "toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=600,height=330,top=200,left=" + l;
+
+		var win = window.open("dropzone/dropzone.php?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>&map_sub_idx=<?=$req_map_sub_idx ?>", "file_upload", features);
+		win.focus();
+		
+		
+	});
+
+	$(document).ready(function(){
+		$('[data-toggle="tooltip"]').tooltip();   
+	});
+//-->
+</script>
+
+  <!-- Modal -->
+  <div class="modal" id="myModalMap" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title" id="modal-title">지도</h4>
+        </div>
+        <div class="modal-body">
+		<iframe id="map_iframe" src="" width="100%" height="500"></iframe>
+        </div>
+        <!-- <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal -->
+  <div class="modal" id="myModalMapMove" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modalmove-title" id="modalmove-title"></h4>
+        </div>
+        <div class="modal-body">
+			<input type="hidden" id="modal_map_sub_idx"/>
+			<input type="hidden" id="modal_map_list_idx"/>
+			<div>선택한 위치 아래로 이동합니다.</div>
+			<div id="map_normal_list"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal" onclick="move_save();"><span class="glyphicon glyphicon-ok"></span>저장</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>

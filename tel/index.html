@@ -1,0 +1,126 @@
+<?
+include "../include/db_connect.php";  // 데이터베이스 연결 스크립트를 포함
+include "../include/function.php";  // 공통 함수들을 포함
+
+session_check();  // 사용자가 로그인되어 있는지 확인하는 함수 호출
+
+$m_idx = $_SESSION['m_idx'];  // 현재 세션에서 'm_idx' 값을 가져와 변수에 저장
+
+// 이전 날짜에 대한 전화봉사 참여자들의 기록을 모두 삭제
+$today = date("Y-m-d");  // 오늘 날짜를 가져옴
+$sql = "UPDATE tel_service SET tel_member_idx='' WHERE tel_service_date < '$today'";  // 오늘 이전의 날짜에 대한 참여자 기록을 초기화
+$result = mysql_query($sql);
+
+// 'tel_info' 테이블에서 'tel_idx'가 1인 항목의 정보를 가져옴
+$sql = "SELECT * FROM tel_info WHERE tel_idx=1";
+$result = mysql_query($sql);
+$rs = mysql_fetch_array($result);
+
+$tel_info_1 = $rs['tel_info'];  // 전화봉사에 대한 정보 저장
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>  // 공통 헤더 파일을 포함하여 메타 태그, 스타일 시트 등을 설정
+</head>
+<body> 
+
+    <!-- 주석 처리된 네비게이션 바 코드. 필요에 따라 활성화 가능 -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>전화봉사</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+	<div class="alert alert-success text-center" role="alert"><strong>전화봉사</strong></div> -->
+
+
+    <div class="page-home">
+      <div class="container">	  
+
+		<div class="row panel panel-success">
+		  <div class="panel-heading">로드뷰</div>  <!-- 패널 헤더에 '로드뷰'라는 제목 표시 -->
+		  <div class="panel-body"><?=$tel_info_1 ?></div>  <!-- 패널 본문에 'tel_info_1' 정보 표시 -->
+		</div>
+
+          <div class="row">
+            <table class="table table-hover">
+              <tbody>
+			<?
+				// 전화봉사 정보를 가져오는 SQL 쿼리 작성
+				$sql = "SELECT ta.tel_idx, ta.tel_no, ta.tel_member_idx, ta.tel_service_date, IFNULL(cnts, 0) AS allcount, IFNULL(ucnts, 0) AS nowcount, CASE WHEN IFNULL(cnts, 0) - IFNULL(ucnts, 0) > 0 THEN 1 ELSE 2 END AS listyn ";
+				$sql .= " , (SELECT m_name FROM member WHERE m_idx=ta.tel_member_idx) AS tel_member_name FROM tel_service ta ";
+				$sql .= " LEFT OUTER JOIN ( ";
+				$sql .= " SELECT tel_idx, COUNT(*) cnts FROM tel_list t GROUP BY tel_idx ) aa ON ta.tel_idx = aa.tel_idx ";
+				$sql .= " LEFT OUTER JOIN ( ";
+				$sql .= " SELECT tel_idx, COUNT(*) ucnts FROM ";
+				$sql .= " (SELECT t.tel_idx, t.tel_list_idx FROM tel_list t JOIN tel_content_list tl ON t.tel_list_idx = tl.tel_list_idx GROUP BY t.tel_idx, t.tel_list_idx) bb ";
+				$sql .= " GROUP BY tel_idx ) bb ";
+				$sql .= " ON ta.tel_idx = bb.tel_idx ";
+				$sql .= " ORDER BY listyn, ta.tel_idx ";  // 리스트 표시 순서 설정
+
+				$result = mysql_query($sql);  // SQL 쿼리를 실행하고 결과를 변수에 저장
+
+				// 리스트를 시작
+				while ($rs = mysql_fetch_array($result)) {
+					$tel_idx = $rs["tel_idx"];
+					$tel_no = $rs["tel_no"];
+					$tel_member_idx = $rs["tel_member_idx"];
+					$tel_member_name = $rs["tel_member_name"];
+					$tel_service_date = $rs["tel_service_date"];
+					$allcount = $rs["allcount"];
+					$nowcount = $rs["nowcount"];
+			?>
+                <tr>
+                  <td><?=$tel_no ?></td>  <!-- 전화 번호 표시 -->
+                  <td><?=$tel_member_name ?></td>  <!-- 참여자 이름 표시 -->
+                  <td align="right">
+				  (총 <?=$allcount ?>: 방문 <?=$nowcount ?>)  <!-- 총 항목 수와 현재 항목 수 표시 -->
+				  <?if ($tel_member_idx == 0) { ?>  <!-- 참여자가 없는 경우 '참여하기' 버튼 표시 -->
+				  <button type="button" class="btn btn-success btn-sm" onclick="tel_start('<?=$tel_idx ?>')">참여하기</button>
+				  <?} else if ($tel_member_idx == $m_idx) { ?>  <!-- 현재 사용자가 참여자인 경우 '봉사하기' 버튼 표시 -->
+				  <button type="button" class="btn btn-warning btn-sm" onclick="location.href='tel_list.html?tel_idx=<?=$tel_idx ?>'">봉사하기</button>
+				  <?} else if ($tel_member_idx != $m_idx) {?>  <!-- 다른 사용자가 참여자인 경우 '함께하기' 버튼 표시 -->
+				  <button type="button" class="btn btn-warning btn-sm" onclick="location.href='tel_list.html?tel_idx=<?=$tel_idx ?>'">함께하기</button>
+				  <?} ?>
+				  </td>
+                </tr>
+			<?
+			}//end while
+			?>
+              </tbody>
+            </table>
+          </div>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>  // 공통 푸터 파일을 포함하여 페이지 끝 부분을 설정
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>  <!-- Bootstrap JavaScript 파일 로드 -->
+<script type="text/javascript">
+<!--
+	function tel_start(tel_idx) {
+		// '참여하기' 버튼 클릭 시 호출되는 함수
+
+		$.ajax({
+			type: "post",
+			url: "tel_work.php",
+			data: "work=tel_start&tel_idx=" + tel_idx,
+			success: function (msg) {
+				if (msg != "") {
+					alert(msg);  // 메시지가 있는 경우 경고창으로 표시
+					location.reload();  // 페이지 새로고침
+				}
+				location.href = "tel_list.html?tel_idx=" + tel_idx;  // 봉사 리스트 페이지로 이동
+			}
+		});
+	}
+//-->
+</script>

@@ -1,0 +1,90 @@
+<?
+include "../include/db_connect.php";  // 데이터베이스 연결 스크립트를 포함
+include "../include/function.php";  // 공통 함수들을 포함
+
+session_check();  // 사용자가 로그인되어 있는지 확인하는 함수 호출
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>  // 공통 헤더를 포함하여 메타 태그와 CSS 등을 설정
+</head>
+<body> 
+
+    <!-- 주석 처리된 네비게이션 바 코드. 필요에 따라 사용할 수 있음 -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/service/"><img src="/img/icon-home.png"></a>
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>홈</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+
+    <div class="page-home">  <!-- 페이지 내용 시작 -->
+      <div class="container">  <!-- 콘텐츠를 감싸는 컨테이너 -->
+        <div class="row panel panel-success">  <!-- Bootstrap 패널, 성공 스타일 사용 -->
+		  <div class="panel-heading">비밀번호변경</div>  <!-- 패널 헤더 -->
+		  <div class="panel-body">  <!-- 패널 본문 -->
+		  
+		  <label>변경할 비밀번호</label>
+			<input type="password" id="pwd1" class="form-control" placeholder="비밀번호입력">  <!-- 비밀번호 입력 필드 -->
+		  <label>변경 비밀번호 확인</label>
+			<input type="password" id="pwd2" class="form-control" placeholder="비밀번호입력">  <!-- 비밀번호 확인 필드 -->
+
+		  </div>  <!-- 패널 본문 끝 -->
+		</div>  <!-- 패널 끝 -->
+
+      </div>  <!-- 컨테이너 끝 -->
+
+	  <div class="text-center">  <!-- 중앙 정렬된 저장 버튼 -->
+	    <button type="button" class="btn btn-success" onclick="info_save()">
+            <span class="glyphicon glyphicon-ok"></span> 저장
+        </button>
+	  </div>
+
+    </div>  <!-- 페이지 내용 끝 -->
+
+<?include "../include/footer.html";?>  // 공통 푸터를 포함하여 페이지 끝 부분을 설정
+
+</body>
+</html>
+
+<script src="/bootstrap/js/bootstrap.min.js"></script>  <!-- Bootstrap JS 로드 -->
+<script>
+
+	function info_save() {
+		var pwd1 = $("#pwd1").val();  // 첫 번째 비밀번호 입력 값 가져오기
+		var pwd2 = $("#pwd2").val();  // 두 번째 비밀번호 입력 값 가져오기
+
+		if (pwd1 == "" || pwd2 == "") {  // 비밀번호 입력 필드가 비어있는지 확인
+			alert("비밀번호를 입력하세요");  // 경고 메시지 표시
+			$("#pwd1").focus();  // 첫 번째 비밀번호 입력 필드에 포커스 설정
+			return;  // 함수 종료
+		}
+		if (pwd1 != pwd2) {  // 두 비밀번호가 일치하는지 확인
+			alert("비밀번호가 일치하지 않습니다\n다시 입력하세요");  // 경고 메시지 표시
+			$("#pwd1").val("");  // 비밀번호 필드 초기화
+			$("#pwd2").val("");  // 비밀번호 확인 필드 초기화
+			return;  // 함수 종료
+		}
+
+		// AJAX 요청을 통해 비밀번호 변경 작업 수행
+		$.ajax({
+			type: "post",  // POST 메서드를 사용하여 데이터 전송
+			url: "info_work.php",  // 비밀번호 변경을 처리할 서버 스크립트
+			data: "work=info_save&pwd=" + pwd1,  // 서버에 전송할 데이터 (작업 타입과 비밀번호)
+			success: function (msg) {  // 서버 응답이 성공적으로 도착했을 때 실행
+				if (msg == "") {  // 응답 메시지가 비어있으면
+					alert("비밀번호가 변경되었습니다\n다시 로그인해주세요.");  // 성공 메시지 표시
+					location.href = "/";  // 홈 페이지로 리디렉션
+				} else {
+					alert(msg);  // 오류 메시지를 표시
+				}
+			}
+		});
+	}	
+
+</script>

@@ -1,0 +1,647 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+}
+
+$req_map_idx=$_REQUEST["map_idx"];
+$req_map_service=$_REQUEST["map_service"];
+$req_map_review=$_REQUEST["map_review"];
+
+$ministry_date=date("Y-m-d");
+
+
+//구역지정원칙
+//구역 지정이 안된 것은 여러 개를 동시 선택 가능, 단, 구역지정이   된 것은 선택취소가 되도록 함. (신규생성)
+//구역 지정이   된 것은 여러 개를 동시 선택 가능, 단, 구역지정이 안된 것은 선택취소가 되도록 함. (지정일자, 봉사형태를 수정)
+//종료일이 있는 것은 선택이 불가
+//구역취소는 지정일만 있는것으로 한다.
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+<style type="text/css">
+	.nav-pills > li.active > a,
+	.nav-pills > li.active > a:hover,
+	.nav-pills > li.active > a:focus {
+		color: #fff;
+		background-color: #5bc0de;
+	}
+
+	.nav > li > a {
+		position: relative;
+		display: block;
+		padding: 10px 15px;
+		background-color: #eee;
+	}
+
+	.nav a{
+		color:#5bc0de;
+	}
+</style>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/guide/">인도자</a> > <a href="/guide/guide_content.html?map_service=<?=$req_map_service ?>">봉사기록</a> > <a href="#"><strong>구역선택</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">
+
+		  <div class="row marginbottom10">
+			<div class="col-sm-12">
+			  <ul class="nav nav-pills">
+				<li<?=($req_map_service=="normal")?" class=\"active\"":"" ?>><a href="guide_content.html?map_service=normal">일반</a></li>
+				<li<?=($req_map_service=="apt")?" class=\"active\"":"" ?>><a href="guide_content.html?map_service=apt">아파트</a></li>
+				<li<?=($req_map_service=="display")?" class=\"active\"":"" ?>><a href="guide_content.html?map_service=display">전시대</a></li>
+				<li<?=($req_map_service=="letter")?" class=\"active\"":"" ?>><a href="guide_content.html?map_service=letter">편지봉사</a></li>
+			  </ul>
+			</div>
+		  </div>
+
+		<div class="row col-sm-12 marginbottom10">
+
+			  <ul class="nav nav-pills">
+<?
+$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_idx=$rs[map_idx];
+	$map_no=$rs[map_no];
+	?>
+				<li<?=($map_idx==$req_map_idx)?" class=\"active\"":"" ?>><a href="?map_idx=<?=$map_idx ?>&map_service=<?=$req_map_service ?>"><?=$map_no ?></a></li>
+	<?
+}
+?>
+			  </ul>
+
+		</div>
+
+		<div class="row col-sm-12 form-inline marginbottom10 hidden">
+			<div class="form-group" >
+			<input type="text" name="ministry_date" id="ministry_date" class="form-control " placeholder="날짜입력" value="<?=$ministry_date ?>" maxlength="10"> 
+	
+			<?
+			$sql="SELECT * FROM db_service_type";
+			$result=mysql_query($sql);
+			?>
+
+			<select name="ministry_service_idx" id="ministry_service_idx" class="form-control">
+				<option value="">봉사형태선택
+			<?
+			while($rs=mysql_fetch_array($result)){
+				$service_idx=$rs[service_idx];
+				$service_type=$rs[service_type];
+			?>
+				<option value="<?=$service_idx ?>" ><?=$service_type ?>
+			<?
+			}
+			?>
+			</select>
+			</div>
+			<button type="button" class="btn btn-success" id="btn-add"  onclick="guide_choice();">구역지정</button>
+			<button type="button" class="btn btn-warning" id="btn-cancel"  onclick="guide_cancel();">구역지정취소</button>
+
+		</div>
+
+		<div class="row col-sm-12 marginbottom10 hidden">
+			<button class="btn btn-sm btn-danger active" id="btn-person" aria-dse-val="P">개인<br>구역</button>
+			<button class="btn btn-sm btn-info active" id="btn-nothing" aria-dse-val="N">안한<br>구역</button>
+			<button class="btn btn-sm btn-primary active" id="btn-date" aria-dse-val="D">지정<br>구역</button>
+			<button class="btn btn-sm btn-success active" id="btn-start" aria-dse-val="S">진행<br>구역</button>
+			<button class="btn btn-sm btn-complete2 active" id="btn-end" aria-dse-val="E">완료<br>구역</button>
+		</div>
+		
+		<div class="row col-sm-12 marginbottom10 hidden">
+			<span class="label label-info2">T : 봉사형태</span> 
+			<span class="label label-info2">D : 구역지정일</span> 
+			<span class="label label-info2">S : 봉사시작일</span> 
+			<span class="label label-info2">E : 봉사종료일</span><br>
+			<span class="label label-info2">LS : 최근봉사시작일</span> 
+			<span class="label label-info2">LE : 최근봉사종료일</span>
+			<label class="btn switch">
+			  <input type="checkbox" id="map_review2">
+			  <span class="slider round">구역미리보기</span>
+			</label>
+		</div>
+		
+		<div class="row col-sm-12 marginbottom10 hidden">
+			<label class="btn switch">
+			  <input type="checkbox" id="map_review">
+			  <span class="slider round">구역미리보기</span>
+			</label>
+		</div>
+
+		<div id="grid" class="row col-sm-12 marginbottom10">
+<?
+$sql="
+select *, (select m_name from member where m_idx=T.ministry_member_idx) as map_sub_member_name 
+from 
+(
+	SELECT *
+	, (select ministry_member_idx from ministry_list where map_sub_idx=a.map_sub_idx and ministry_date is null) as ministry_member_idx
+
+	, (select ministry_date       from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_date
+	, (select ministry_start_date from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_start_date
+	, (select ministry_end_date   from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_end_date
+	, (select service_type from db_service_type where service_idx=(select ministry_service_idx from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1)) as service_type
+
+	, (select ministry_start_date from ministry_list_record where map_sub_idx=a.map_sub_idx order by idx desc limit 1) as last_ministry_start_date
+	, (select ministry_end_date   from ministry_list_record where map_sub_idx=a.map_sub_idx order by idx desc limit 1) as last_ministry_end_date
+
+		, (SELECT COUNT(map_sub_idx) FROM map_normal_list WHERE map_sub_idx=a.map_sub_idx) AS tot_cnt
+		, (SELECT COUNT(map_sub_idx) FROM map_normal_list WHERE map_sub_idx=a.map_sub_idx AND map_list_visit_c='' AND map_list_enter_c<>'N') AS cnt
+		, (SELECT COUNT(map_sub_idx) FROM map_normal_list WHERE map_sub_idx=a.map_sub_idx AND map_list_visit_c='Y') AS visit_cnt
+		, (SELECT COUNT(map_sub_idx) FROM map_normal_list WHERE map_sub_idx=a.map_sub_idx AND map_list_visit_c='N') AS empty_cnt
+
+	FROM map_normal_sub a WHERE map_idx='$req_map_idx'
+) T 
+order by map_sub_no";
+
+
+$sql3="
+select *
+	, (cnt+visit_cnt+empty_cnt) as tot_cnt
+	, (select m_name from member where m_idx=T.ministry_member_idx) as map_sub_member_name  
+from
+(
+	SELECT a.map_idx, a.map_sub_idx, a.map_sub_no, a.map_sub_info, a.map_sub_addr, a.map_sub_polygon
+
+	, (select ministry_member_idx from ministry_list where map_sub_idx=a.map_sub_idx and ministry_date is null) as ministry_member_idx
+	
+	, (select ministry_date       from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_date
+	, (select ministry_start_date from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_start_date
+	, (select ministry_end_date   from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1) as ministry_end_date
+	, (select service_type from db_service_type where service_idx=(select ministry_service_idx from ministry_list where map_sub_idx=a.map_sub_idx order by ministry_idx desc limit 1)) as service_type
+
+	, (select ministry_start_date from ministry_list_record where map_sub_idx=a.map_sub_idx order by idx desc limit 1) as last_ministry_start_date
+	, (select ministry_end_date   from ministry_list_record where map_sub_idx=a.map_sub_idx order by idx desc limit 1) as last_ministry_end_date
+
+	, case when isnull(cnt)       then 0 else cnt       end cnt
+	, case when isnull(visit_cnt) then 0 else visit_cnt end visit_cnt
+	, case when isnull(empty_cnt) then 0 else empty_cnt end empty_cnt
+	, case when isnull(content_cnt) then 0 else content_cnt end content_cnt
+			
+	FROM map_normal_sub a 
+
+			  left join (SELECT map_sub_idx, count(map_sub_idx) as cnt           FROM map_normal_list where map_list_visit_c='' and map_list_enter_c<>'N'  group by map_sub_idx ) as c on a.map_sub_idx=c.map_sub_idx
+			  left join (SELECT map_sub_idx, count(map_sub_idx) as visit_cnt     FROM map_normal_list where map_list_visit_c='Y' group by map_sub_idx ) as d on a.map_sub_idx=d.map_sub_idx
+			  left join (SELECT map_sub_idx, count(map_sub_idx) as empty_cnt     FROM map_normal_list where map_list_visit_c='N' group by map_sub_idx ) as e on a.map_sub_idx=e.map_sub_idx
+			  left join (SELECT map_sub_idx, COUNT(map_sub_idx) AS content_cnt FROM (SELECT (SELECT map_sub_idx FROM map_normal_list WHERE map_list_idx=a.map_list_idx) AS map_sub_idx FROM map_normal_list_content a) f group BY map_sub_idx) as ff on a.map_sub_idx=ff.map_sub_idx
+
+	WHERE a.map_idx='$req_map_idx'
+) T
+order by map_sub_no";
+//echo $sql3;
+$result=mysql_query($sql3);
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_sub_idx=$rs[map_sub_idx];
+	$map_sub_no=$rs[map_sub_no];
+	$map_sub_info=$rs[map_sub_info];
+	$map_sub_cnt=$rs[map_sub_cnt];
+	$map_sub_addr=$rs[map_sub_addr];
+	$map_sub_member_idx=$rs[ministry_member_idx];
+	$map_sub_member_name=$rs[map_sub_member_name];
+	
+	$ministry_date=$rs[ministry_date];
+	$ministry_start_date=$rs[ministry_start_date];
+	$ministry_end_date=$rs[ministry_end_date];
+	$service_type=$rs[service_type];
+
+	$last_ministry_start_date=$rs[last_ministry_start_date];
+	$last_ministry_end_date=$rs[last_ministry_end_date];
+
+
+	$ministry_tot_cnt=$rs[tot_cnt]; 
+	$ministry_ing_cnt=$rs[cnt]; //남은 갯수
+	$ministry_visit_cnt=$rs[visit_cnt]; //방문 갯수
+	$ministry_empty_cnt=$rs[empty_cnt]; //부재 갯수
+	$ministry_content_cnt=$rs[content_cnt]; //봉사기록 갯수
+
+	//$map_dse 설정값
+	//N : 지정일 O, 시작일 O, 종료일 O
+	//D : 지정일 X, 시작일 O, 종료일 O
+	//S : 지정일 X, 시작일 X, 종료일 O
+	//E : 지정일 X, 시작일 X, 종료일 X
+
+	if ($ministry_date=="" && $ministry_start_date=="" && $ministry_end_date==""){
+		$map_dse="N";
+	}else if($ministry_date!="" && $ministry_start_date=="" && $ministry_end_date==""){
+		$map_dse="D";	
+	}else if($ministry_date!="" && $ministry_start_date!="" && $ministry_end_date==""){
+		$map_dse="S";	
+	}else if($ministry_date!="" && $ministry_start_date!="" && $ministry_end_date!=""){
+		$map_dse="E";	
+	}
+	if ($map_sub_member_idx>0){
+		$map_dse="P";	
+	}
+	?>
+		<span class="grid_list" aria-map-dse="<?=$map_dse ?>">
+			  <input type="checkbox" class="check_map_dse_<?=$map_dse ?>" name="check_map_sub_idx" id="check_map_sub_idx_<?=$map_sub_idx ?>" value="<?=$map_sub_idx ?>" data-map-sub-no="<?=$map_sub_no ?>" data-map-dse="<?=$map_dse ?>"  style="display:none;"><?//=$map_sub_idx ?>
+			  <button type="button" id="map_sub_idx_<?=$map_sub_idx ?>" onclick="map_choice(<?=$map_sub_idx ?>, '<?=$map_dse ?>')" class="map_dse_<?=$map_dse ?> btn btn-default3 
+			  
+			  <?if ($map_sub_member_idx>0){?>
+			  --btn-danger
+			  <?}?>
+			
+			  <?      if ($ministry_date=="" && $ministry_start_date=="" && $ministry_end_date==""){?>
+			  --btn-info
+			  <?}else if ($ministry_date!="" && $ministry_start_date=="" && $ministry_end_date==""){?>
+			  --btn-primary
+			  <?}else if ($ministry_date!="" && $ministry_start_date!="" && $ministry_end_date!=""){?>
+			  --btn-complete
+			  <?}else if ($ministry_date!="" && $ministry_start_date!=""){?>
+			  --btn-success
+			  <?}?>	  
+			  btn-info
+			  " 
+			  
+			  <?if ($map_sub_member_idx>0){?>
+			  --disabled
+			  <?}?>
+			  
+			  <?if ($ministry_date!="" && $ministry_start_date!="" && $ministry_end_date!=""){?>
+			  --disabled
+			  <?}?>
+			  >
+			  
+			  
+			  <?=$map_sub_no ?><br>
+			  
+			  <?if ($map_sub_member_idx>0){?><span style="font-size:10px;">개인:<?=$map_sub_member_name ?></span><br><?}?>
+			  
+			  <?if ($service_type!=""){?><span style="font-size:11px;color:#ffffff">T:<?=$service_type ?></span><br><?}?>
+			  <?if ($ministry_date!=""){?><span style="font-size:11px;color:#ffff00">D:<?=$ministry_date ?></span><br><?}?>
+			  <?if ($ministry_start_date!=""){?><span style="font-size:11px;color:#ffffff">S:<?=$ministry_start_date ?></span><br><?}?>
+			  <?if ($ministry_end_date!=""){?><span style="font-size:11px;color:#ffffff">E:<?=$ministry_end_date ?></span><?}?>
+
+			  
+
+			  <div style="border-top:1px solid #ffffff;padding-top:5px;margin-top:5px;">
+				  <span style="font-size:10px;">
+					전체 <?=$ministry_tot_cnt ?> 방문 <?=$ministry_visit_cnt ?><br>
+					부재 <?=$ministry_empty_cnt ?> 남은집 <?=$ministry_ing_cnt ?><br>
+					봉사기록 <?=$ministry_content_cnt ?>
+				  </span>
+			  </div>
+
+			  <?if ($last_ministry_start_date != "") {?>
+			  <div style="border-top:1px solid #ffffff;margin-top:5px;">
+			  <span style="font-size:10px;color: #ffffff">LS:<?=$last_ministry_start_date ?></span>
+			  <?if ($last_ministry_end_date!=""){?>
+			  <br>
+			  <span style="font-size:10px;color: #ffffff">LE:<?=$last_ministry_end_date ?></span>
+			  <?}?>
+			  </div>
+			  <?}?>
+			  
+			  </button>
+		</span>
+	<?
+}
+?>
+		</div>
+
+		
+		<div class="row col-sm-12 marginbottom10">
+			<div id="map_normal_list"></div>
+		</div>
+
+
+      </div>
+    </div>
+
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	$( "#ministry_date" ).datepicker({
+
+		dateFormat: 'yy-mm-dd',
+		prevText: '이전 달',
+		nextText: '다음 달',
+		monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+		monthNamesShort: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+		dayNames: ['일','월','화','수','목','금','토'],
+		dayNamesShort: ['일','월','화','수','목','금','토'],
+		dayNamesMin: ['일','월','화','수','목','금','토'],
+		showMonthAfterYear: true,
+	//    changeMonth: true,
+	//    changeYear: true,
+		yearSuffix: '년',
+
+
+	});	
+//-->
+</script>
+<script type="text/javascript">
+<!--
+
+	var map_review = "<?=$req_map_review ?>";
+
+	if (map_review=="true") {
+		$("#map_review").prop("checked",true);
+	}
+
+	$("#btn-person, #btn-nothing, #btn-date, #btn-start, #btn-end").click(function (){
+		
+		var dse_val=$(this).attr("aria-dse-val");
+
+		$(this).toggleClass("active");
+
+		var cc = $(".grid_list").each(function (){
+			
+			var aria_map_dse = $(this).attr("aria-map-dse");
+
+			if (aria_map_dse==dse_val)			{
+				if ($(this).css("display")=="none"){
+					$(this).css("display","inline");
+				}else{
+					$(this).css("display","none");
+				}
+			}
+		});		
+	});
+
+	function map_choice(map_sub_idx, map_dse){
+
+		location.href  = "guide_content_map_list.html?map_sub_idx="+map_sub_idx+"&map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>";
+		return;
+		
+//		var check_map_sub_idx=$("#check_map_sub_idx_"+map_sub_idx);
+//		var map_sub_idx=$("#map_sub_idx_"+map_sub_idx);
+//
+//		var chk=check_map_sub_idx.prop("checked");
+//		var map_sub_no=check_map_sub_idx.attr("data-map-sub-no");
+//
+//
+//		if (map_dse=="N"){
+//			$(".check_map_dse_D").prop("checked",false);
+//			$(".map_dse_D").removeClass("btn-warning");
+//			$(".check_map_dse_S").prop("checked",false);
+//			$(".map_dse_S").removeClass("btn-warning");
+//		}
+//		if (map_dse=="D"){
+//			$(".check_map_dse_N").prop("checked",false);
+//			$(".map_dse_N").removeClass("btn-warning");
+//		}
+//		if (map_dse=="S"){
+//			$(".check_map_dse_N").prop("checked",false);
+//			$(".map_dse_N").removeClass("btn-warning");
+//		}
+//
+//
+//		if (chk==true){
+//			check_map_sub_idx.prop("checked",false);
+//			map_sub_idx.removeClass("btn-warning");
+//		}else{
+//			check_map_sub_idx.prop("checked",true);
+//			map_sub_idx.addClass("btn-warning");
+//		}
+//
+//
+//		//구역상세내용 보기/감춤 체크
+//		var map_review = $("#map_review").prop("checked");
+//		if (map_review==false) {
+//			return;
+//		}
+//
+//		var al_map_sub_idx="";
+//
+//		$("input[name=check_map_sub_idx]:checked").each(function (index){
+//			
+//			if (index>0){
+//				al_map_sub_idx+=",";
+//			}
+//			al_map_sub_idx+=$(this).val();
+//				
+//		});
+//
+//		map_list(al_map_sub_idx);
+
+	}
+
+//	function guide_choice(){
+//
+//		var ministry_date="";
+//		var map_sub_idx="";
+//
+//		ministry_date=$("#ministry_date").val();
+//
+//		if (ministry_date==""){
+//			alert("날짜를 입력하세요");
+//			$("#ministry_date").focus();
+//			return;
+//		}
+//
+//
+//		var ministry_service_idx = $("#ministry_service_idx").val();
+//
+//		if (ministry_service_idx==""){
+//			alert("봉사형태를 선택하세요");
+//			return;
+//		}
+//
+//
+//		$("input[name=check_map_sub_idx]:checked").each(function (index){
+//			
+//			if (index>0){
+//				map_sub_idx+=",";
+//			}
+//			map_sub_idx+=$(this).val();
+//				
+//		});
+//
+//		if (map_sub_idx==""){
+//			alert("구역을 선택하세요");
+//			return;
+//		}
+//
+//
+//		var map_idx="<?=$req_map_idx ?>";
+//		var map_service="<?=$req_map_service ?>";
+//		var map_review = $("#map_review").prop("checked");
+//
+//		$.ajax({
+//			type: "post",
+//			url: "guide_choice_work.php",
+//			data: "work=ministry_add&ministry_date="+ministry_date+"&ministry_service_idx="+ministry_service_idx+"&map_sub_idx="+map_sub_idx,
+//			success: function (msg) {
+//				location.href="guide_choice_sub.html?map_idx="+map_idx+"&map_service="+map_service+"&map_review="+map_review;
+//
+//			}
+//		});		
+//
+//	}
+
+	function guide_cancel(){
+
+		var map_sub_idx="";
+		var map_dse="";
+		var map_dse_is=false;
+
+		$("input[name=check_map_sub_idx]:checked").each(function (index){
+			
+			if (index>0){
+				map_sub_idx+=",";
+			}
+			map_sub_idx+=$(this).val();
+
+			map_dse=$(this).attr("data-map-dse");
+
+			if (map_dse=="N"){
+				alert("지정일이 안된 구역입니다.");
+				map_dse_is=true;
+				return false;
+			}
+			if (map_dse=="S"){
+				alert("봉사가 진행중인 구역이 있습니다.\n봉사가 진행중인 구역은 취소 할 수 없습니다.");
+				map_dse_is=true;
+				return false;
+			}
+
+				
+		});
+
+		if (map_dse_is==true){
+			return;
+		}
+
+		if (map_sub_idx==""){
+			alert("구역을 선택하세요");
+			return;
+		}
+
+
+		var map_idx="<?=$req_map_idx ?>";
+		var map_service="<?=$req_map_service ?>";
+
+
+		$.ajax({
+			type: "post",
+			url: "guide_choice_work.php",
+			data: "work=ministry_del&map_sub_idx="+map_sub_idx,
+			success: function (msg) {
+				location.href="guide_choice_sub.html?map_idx="+map_idx+"&map_service="+map_service;
+			}
+		});		
+
+	}
+
+	function map_list(map_sub_idx){
+		
+		if (map_sub_idx==0)
+		{
+			$("#map_normal_list").html("");
+			return;
+		}
+
+		var map_service="<?=$req_map_service ?>";
+
+		if (map_service=="display")
+		{
+			return;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "guide_choice_work.php",
+			data: "work=map_normal_list&map_sub_idx="+map_sub_idx,
+			success: function (msg) {
+				$("#map_normal_list").html(msg);
+			}
+		});	
+
+	}
+
+	function map_list_enter_Y(map_sub_idx, map_list_idx){
+		//방문 거절 항목 체크
+
+		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
+		var enter_N=$("#map_list_enter_N_"+map_list_idx);
+
+//		enter_Y.prop("checked",true);
+		enter_N.prop("checked",false);
+
+		var set_enter="";
+
+		if (enter_Y.prop("checked")==true){
+			set_enter="Y";
+		}else{
+			set_enter="";
+		}
+
+//		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
+	}
+
+	function map_list_enter_N(map_sub_idx, map_list_idx){
+		//방문 금지 항목 체크
+
+		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
+		var enter_N=$("#map_list_enter_N_"+map_list_idx);
+
+		enter_Y.prop("checked",false);
+//		enter_N.prop("checked",true);
+
+		var set_enter="";
+
+		if (enter_N.prop("checked")==true){
+			set_enter="N";
+		}else{
+			set_enter="";
+		}
+
+		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
+	}
+
+	function map_list_update(map_sub_idx, map_list_idx, field, val){
+
+		$.ajax({
+			type: "post",
+			url: "guide_choice_work.php",
+			data: "work=map_list_update&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx+"&field="+field+"&val="+val,
+			success: function (msg) {
+			}
+		});	
+
+	}
+
+	function map_save(map_list_idx) {
+		//구분선 저장
+
+		var map_list_line = $("#map_list_line_"+map_list_idx).prop("checked")==true?"1":"0";
+
+		$.ajax({
+			type: "post",
+			url: "guide_choice_work.php",
+			data: "work=map_save&map_list_idx=" + map_list_idx + "&map_list_line=" + map_list_line,
+			success: function (msg) {
+			}
+		});
+	}
+
+//-->
+</script>

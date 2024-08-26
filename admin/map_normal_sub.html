@@ -1,0 +1,326 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2,3")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+$req_map_idx=$_REQUEST["map_idx"];
+$req_map_service=$_REQUEST["map_service"];
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/map_normal.html?map_service=<?=$req_map_service ?>" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="/admin/map_normal.html?map_service=<?=$req_map_service ?>">구역관리</a> > <a href="#"><strong><?=service_name($req_map_service); ?></strong></a>
+		  </div>
+      </div>
+    </nav>
+
+
+    <div class="page">
+      <div class="container">	  
+
+		  <div class="row marginbottom10">
+
+			<div class="col-sm-12">
+			  <ul class="nav nav-pills">
+				<li<?=($req_map_service=="normal")?" class=\"active\"":"" ?>><a href="map_normal.html?map_service=normal">일반</a></li>
+				<li<?=($req_map_service=="apt")?" class=\"active\"":"" ?>><a href="map_normal.html?map_service=apt">아파트</a></li>
+				<li><a href="tel_service.html">전화봉사</a></li>
+				<li><a href="tel_service_list.html">전화봉사관리</a></li>
+				<li><a href="person_service.html">개인구역</a></li>
+				<li<?=($req_map_service=="display")?" class=\"active\"":"" ?>><a href="map_normal.html?map_service=display">전시대</a></li>
+				<li<?=($req_map_service=="letter")?" class=\"active\"":"" ?>><a href="map_normal.html?map_service=letter">편지봉사</a></li>
+			  </ul>
+			</div>
+		  </div>
+
+		  <div class="row marginbottom10">
+
+			<div class="col-sm-12">
+			  <ul class="nav nav-pills">
+<?
+$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' ORDER BY map_rank";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_idx=$rs[map_idx];
+	$map_no=$rs[map_no];
+?>
+				<li<?=($map_idx==$req_map_idx)?" class=\"active\"":"" ?>><a href="?map_idx=<?=$map_idx ?>&map_service=<?=$req_map_service ?>"><?=$map_no ?></a></li>
+<?
+}
+?>
+			  </ul>
+			</div>
+
+		  </div>
+
+
+		<div class="row col-sm-12 marginbottom10">
+<?
+$sql="
+SELECT a.map_idx, a.map_sub_idx, a.map_sub_no, a.map_sub_info, a.map_sub_notice, a.map_sub_addr, a.map_sub_polygon, b.ministry_date, b.ministry_member_idx, 
+CASE WHEN ministry_date IS NULL 
+THEN (
+
+SELECT m_name
+FROM member
+WHERE m_idx = b.ministry_member_idx
+)
+END AS map_sub_member_name
+FROM (
+
+SELECT * 
+FROM map_normal_sub
+WHERE map_idx =  '$req_map_idx'
+)a
+LEFT JOIN (
+
+SELECT map_sub_idx, ministry_date, ministry_member_idx
+FROM ministry_list
+)b ON a.map_sub_idx = b.map_sub_idx
+
+ORDER BY a.map_sub_no
+";
+$result=mysql_query($sql);
+
+while($rs=mysql_fetch_array($result)){
+
+	$map_idx=$rs[map_idx];
+	$map_sub_idx=$rs[map_sub_idx];
+	$map_sub_no=$rs[map_sub_no];
+	$map_sub_info=$rs[map_sub_info];
+	$map_sub_addr=$rs[map_sub_addr];
+	$map_sub_notice=$rs[map_sub_notice];
+	//$map_sub_member_idx=$rs[map_sub_member_idx];
+	$map_sub_member_name=$rs[map_sub_member_name];
+	$ministry_date=$rs[ministry_date];
+	$ministry_member_idx=$rs[ministry_member_idx];
+
+
+	//지정일이 비어 있으면 '개인구역'설정 가능
+	if ($ministry_date == null){
+		$is_person="Y";
+	}else{
+		$is_person="N";
+	}
+?>
+
+		<div class="btn-group" id="map_sub_idx_<?=$map_sub_idx ?>">
+		  <button type="button" class="btn btn-default btn-primary3 <?=($map_sub_member_name!="")?"btn-danger":"" ?>" onclick="location.href='map_normal_list.html?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>&map_sub_idx=<?=$map_sub_idx ?>'" id="map_no_<?=$map_sub_idx ?>"><?=$map_sub_no ?><br><?=$map_sub_member_name ?></button>
+		  <button type="button" class="btn btn-default dropdown-toggle dropdown-toggle2 <?=($map_sub_member_name!="")?"btn-danger":"" ?>" data-toggle="dropdown">
+			<span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu" role="menu">
+			<li><a href="#" onclick="map_view('<?=$map_sub_idx ?>', '<?=$map_sub_info ?>', '<?=$map_sub_addr ?>')"><span class="glyphicon glyphicon-map-marker"></span> 지도보기</a></li>
+			<li><a href="#" onclick="map_modify('<?=$map_idx ?>','<?=$map_sub_idx ?>', '<?=$map_sub_no ?>', '<?=$map_sub_info ?>', '<?=$map_sub_addr ?>', '<?=$ministry_member_idx ?>','<?=$is_person ?>','<?=$req_map_service ?>', '<?=$map_sub_notice ?>')"><span class="glyphicon glyphicon-pencil"></span> 수정</a></li>
+			<li><a href="#" onclick="map_del('<?=$map_sub_idx ?>')"><span class="glyphicon glyphicon-trash"></span> 삭제</a></li>
+		  </ul>
+		</div>
+<?
+}
+?>
+		</div>
+			<button type="button" class="btn btn-success" id="btn-add"  onclick="map_add('<?=$req_map_idx ?>');"><span class="glyphicon glyphicon-plus"></span> 추가</button>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function map_add(map_idx) {
+
+		var map_service = "<?=$req_map_service ?>";
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_add&map_idx="+map_idx+"&map_service="+map_service,
+			success: function (msg) {
+				location.href="map_normal_sub.html?map_idx="+map_idx+"&map_service="+map_service;
+			}
+		});
+	}
+
+	function map_modify(map_idx, map_sub_idx, map_sub_no, map_sub_info, map_sub_addr, ministry_member_idx, is_person, map_service, map_sub_notice) {
+
+		$("#ministry_member_idx").html("");
+		$("#map_idx").html("");
+
+		$("#map_sub_idx").val(map_sub_idx);
+		$("#map_sub_no").val(map_sub_no);
+		$("#map_sub_info").val(map_sub_info);
+		$("#map_sub_addr").val(map_sub_addr);
+		$("#map_sub_notice").val(map_sub_notice);
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_normal_list&map_idx="+map_idx+"&map_service="+map_service,
+			success: function (msg) {
+				$("#map_idx").html(msg);
+			}
+		});
+
+
+		if (is_person=="Y")
+		{
+
+			$.ajax({
+				type: "post",
+				url: "map_normal_sub_work.php",
+				data: "work=member_list&map_sub_idx="+map_sub_idx+"&ministry_member_idx="+ministry_member_idx,
+				success: function (msg) {
+					$("#ministry_member_idx").html(msg);
+				}
+			});
+
+		}
+
+        $("#myModal").modal();
+
+		if (is_person=="N")
+		{
+			$("#ministry_member_idx").css("display","none");
+		}else{
+			$("#ministry_member_idx").css("display","block");
+		}
+	}	
+
+	function map_save() {
+
+		var map_service = "<?=$req_map_service ?>";
+		var map_idx = $("#map_idx").val();
+		var map_sub_idx = $("#map_sub_idx").val();
+		var map_sub_no = $("#map_sub_no").val();
+		var map_sub_info = $("#map_sub_info").val();
+		var map_sub_addr = $("#map_sub_addr").val();
+		var ministry_member_idx = $("#ministry_member_idx").val();
+		var map_sub_notice = $("#map_sub_notice").val();
+
+		if (map_idx==0){
+			alert("상위구역을 선택하세요");
+			return;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_save&map_idx="+map_idx+"&map_sub_idx=" + map_sub_idx + "&map_sub_no=" + map_sub_no + "&map_sub_info=" + map_sub_info + "&map_sub_addr=" + map_sub_addr + "&ministry_member_idx=" + ministry_member_idx + "&map_sub_notice=" + map_sub_notice,
+			success: function (msg) {
+				location.href="map_normal_sub.html?map_idx="+map_idx+"&map_service="+map_service;
+			}
+		});
+	}	
+
+	function map_del(map_sub_idx) {
+
+		if (!confirm("삭제하시겠습니까?")){
+			return false;
+		}
+
+		$.ajax({
+			type: "post",
+			url: "map_normal_sub_work.php",
+			data: "work=map_del&map_sub_idx=" + map_sub_idx,
+			success: function (msg) {
+				if (msg!=""){
+					alert(msg);
+					return;
+				}else{
+					$("#map_sub_idx_" + map_sub_idx).remove();
+				}
+			}
+		});
+	}
+
+
+	function map_view(map_sub_idx, map_sub_info, map_sub_addr){
+
+		var h=$(window).height()-150;
+
+		$("#map_iframe").attr("height",h);
+
+		var map_url="map_view.html?map_sub_idx="+map_sub_idx+"&map_sub_info="+map_sub_info+"&map_sub_addr="+map_sub_addr+"&h="+h;
+			
+		$("#modal-title").html("<strong>구역명</strong>: "+map_sub_info+", <strong>주소</strong>: "+map_sub_addr);
+		$("#map_iframe").attr("src",map_url);
+        $("#myModalMap").modal();
+
+	}	
+
+//-->
+</script>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">수정</h4>
+        </div>
+        <div class="modal-body">
+		<form role="form">
+          <input type="hidden" name="map_sub_idx" id="map_sub_idx">
+		  <select name="map_idx" id="map_idx" class="form-control">
+			<option value="">
+		  </select>
+          <input type="text" name="map_sub_no" id="map_sub_no" placeholder="구역 번호" class="form-control">
+          <input type="text" name="map_sub_info" id="map_sub_info" placeholder="구역 이름" class="form-control">
+          <input type="text" name="map_sub_addr" id="map_sub_addr" placeholder="구역 주소" class="form-control">
+		  <select name="ministry_member_idx" id="ministry_member_idx" class="form-control">
+			<option value="">
+		  </select>
+          <input type="text" name="map_sub_notice" id="map_sub_notice" placeholder="안내사항-내용이 없을 경우 '관리자 > 사이트설정 > 안내사항 기본메세지'가 보입니다." class="form-control">
+		</form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal" onclick="map_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="myModalMap" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title" id="modal-title">지도</h4>
+        </div>
+        <div class="modal-body">
+		<iframe id="map_iframe" src="" width="100%" height="500"></iframe>
+        </div>
+        <!-- <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+
+
