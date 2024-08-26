@@ -1,0 +1,142 @@
+<?
+$m_idx=$_SESSION['m_idx'];
+
+
+$sql="SELECT * FROM bbs where bbs_isElder=0 and bbs_editdate >  date_add(now(), interval -1 day)";
+$result=mysql_query($sql);
+$num_rows = mysql_num_rows($result);
+$notice_num = $num_rows;
+
+$icon_notice="icon-notice";
+if ($notice_num>0) {
+	$icon_notice="icon-notice-new";
+}
+
+
+$sql="SELECT * FROM ministry_list ";
+$sql.=" WHERE 1=1 AND ministry_member_idx='$m_idx' and ministry_date is null";
+
+
+$result=mysql_query($sql);
+$num_rows = mysql_num_rows($result);
+$person_map_num = $num_rows;
+
+$selfpage=$_SERVER['PHP_SELF'];
+?>
+	<footer class="footer ">
+	  <div class="menu container">
+		<ul>
+          <li class="menu-li"><a href="/home/"><img src="/img/icon-schedule<?=strpos($selfpage, '/home/')>-1?'-over':'' ?>.png" title="봉사일정" alt="봉사일정"><p<?=strpos($selfpage, '/home/')>-1?" class=\"active\"":"" ?>>봉사일정</p></a></li>
+		  <?if (site_option("tel_service_show")){?>
+		  <li class="menu-li"><a href="/tel/"><img src="/img/icon-hp<?=strpos($selfpage, '/tel/')>-1?'-over':'' ?>.png" title="전화봉사" alt="전화봉사"><p<?=strpos($selfpage, '/tel/')>-1?" class=\"active\"":"" ?>>전화봉사</p></a></li>
+		  <?}?>
+		  <?if ($person_map_num>0 && $m_idx!=""){?>
+		  <li class="menu-li"><a href="/person/"><img src="/img/icon-person<?=strpos($selfpage, '/person/')>-1?'-over':'' ?>.png" title="개인구역" alt="개인구역"><p<?=strpos($selfpage, '/person/')>-1?" class=\"active\"":"" ?>>개인구역</p></a></li>
+		  <?}?>
+          <li class="menu-li" data-toggle="popover" title="알림" data-placement="top" data-content="새로운 공지사항이 등록되었습니다."><a href="/bbs/bbs_list.html"><img src="/img/<?=$icon_notice ?><?=strpos($selfpage, '/bbs/')>-1?'-over':'' ?>.png" title="공지사항" alt="공지사항"><p<?=strpos($selfpage, '/bbs/')>-1?" class=\"active\"":"" ?>>공지사항</p></a></li>
+		  <?if (mgr_check("1,2,3")){?>
+          <li class="menu-li"><a href="/guide/"><img src="/img/icon-map<?=strpos($selfpage, '/guide/')>-1?'-over':'' ?>.png" title="인도자" alt="인도자"><p<?=strpos($selfpage, '/guide/')>-1?" class=\"active\"":"" ?>>인도자</p></a></li>
+		  <?}?>
+          <li class="menu-li"><a href="/info/"><img src="/img/icon-setting2<?=strpos($selfpage, '/info/')>-1?'-over':'' ?>.png" title="정보변경" alt="정보변경"><p<?=strpos($selfpage, '/info/')>-1?" class=\"active\"":"" ?>>정보변경</p></a></li>
+		  <?if (mgr_check("1,2")){?>
+          <li class="menu-li"><a href="/admin/"><img src="/img/icon-setting<?=strpos($selfpage, '/admin/')>-1?'-over':'' ?>.png" title="관리자" alt="관리자"><p<?=strpos($selfpage, '/admin/')>-1?" class=\"active\"":"" ?>>관리자</p></a></li>
+		  <?}?>
+		  <?if (site_option("sos_show")){?>
+          <li class="menu-li"><a href="#" id="sos"><img src="/img/icon-sos.png" title="긴급전화" alt="긴급전화"><p>긴급전화</p></a></li>
+		  <?}?>
+		</ul>
+      </div>
+    </footer>
+
+<script>//(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d    =d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")</script> 
+
+
+<script type="text/javascript">
+(function(a, b, c) {
+    if (c in b && b[c]) {
+
+        var d, e = a.location, f = /^(a|html)$/i;
+
+		a.addEventListener("click", function(a) {
+		
+			d = a.target;
+
+            while (!f.test(d.nodeName)) {
+				d = d.parentNode;
+			}
+
+			if (d=="")			{
+				return;
+			}
+
+			"href" in d && (d.href.indexOf("http") || ~d.href.indexOf(e.host)) && (a.preventDefault(), e.href = d.href)
+
+		}, !1)
+
+	}
+})(document, window.navigator, "standalone")
+</script>
+
+
+<script type="text/javascript">
+	<?
+	$sql="SELECT * FROM member WHERE m_mgr like '%1%' and m_sos_call='1'";
+	$result=mysql_query($sql);
+	$num=mysql_num_rows($result);
+	$rs = mysql_fetch_array($result);
+
+	$m_name=$rs[m_name];
+	$m_hp=$rs[m_hp];
+
+	if ($num==0){
+	?>
+	$("#sos").click(function (){
+		alert("인도자에게 직접 연락하세요!!");
+	});
+	<?
+	}else{
+	?>
+	$("#sos").click(function (){
+		
+		var m_name="<?=$m_name ?>";
+		var m_hp="<?=$m_hp ?>";
+
+		if (confirm("'"+m_name+"형제'에게 긴급전화를 거시겠습니까?")==true)
+		{
+			$("#sos").attr("href","tel:"+m_hp);
+		}else{
+			$("#sos").attr("href","#");
+		}
+	});
+	<?
+	}
+	?>
+
+$(document).ready(function(){
+	
+	var footer_menu_cnt = $(".footer li").length + 1;
+	var footer_menu_width=100/footer_menu_cnt;
+	footer_menu_width=Math.round(footer_menu_width);
+	$(".menu-li").css("width",(footer_menu_width) +'%');
+
+
+	<?if ($notice_num>0) {?>
+	var notice_num="<?=$notice_num ?>";
+	var new_notice="<?=$_SESSION['new_notice'] ?>";
+
+	if (notice_num>0 && new_notice!="yes" )
+	{
+		$('[data-toggle="popover"]').popover('show');
+		setTimeout(function(){ pophide(); }, 5000);
+	}
+
+
+	function pophide(){
+		$('[data-toggle="popover"]').popover('hide');
+	}
+	<?}?>
+
+});
+</script>
+
+

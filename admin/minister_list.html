@@ -1,0 +1,207 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1,2")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+
+$req_m_name=$_REQUEST["m_name"];
+$req_page=$_REQUEST["page"];
+$req_orderBy=$_REQUEST["orderBy"];
+
+$query_string="";
+$query_string2="";
+
+if ($req_m_name!=""){
+	$wsql=" and m_name like '%$req_m_name%'";
+	$query_string="&m_name=$req_m_name";
+	$query_string2="&m_name=$req_m_name";
+}
+
+
+if (!$req_page || $req_page < 0){
+  $ipage=1;	//$page값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 0으로 처리
+}else{
+  $ipage=$req_page;
+}
+
+$query_string2.="&page=".$ipage;
+
+
+
+$sql="SELECT COUNT(*) FROM member WHERE 1=1 and m_idx > 1 ";
+if ($req_m_name!=""){
+	$sql.=$wsql;
+}
+$result_count=mysql_query($sql);
+$result_row=mysql_fetch_row($result_count);
+$total_row=$result_row[0];
+
+$page_size=10;		//한 페이지에 보여질 게시물의 수
+$page_list_size=10; //페이지 나누기에 표시될 페이지의 수
+
+
+
+
+
+$sql="SELECT * FROM member WHERE 1=1 and m_idx > 1 ";
+if ($req_m_name!=""){
+	$sql.=$wsql;
+}
+$iipage=(int)(($ipage-1)*$page_size);
+
+if ($req_orderBy==""){
+	$sql.=" ORDER BY m_idx desc ";
+}else{
+	$sql.=" ORDER BY $req_orderBy ";	
+}
+$sql.= "LIMIT $iipage, $page_size";
+$result=mysql_query($sql);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="/admin/minister_list.html"><strong>전도인관리</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+    <div class="page">
+      <div class="container">
+	  
+		  <form name="form1" action="minister_list.html" method="post" class="form-horizontal" >
+		  <div class="form-group has-success has-feedback">
+			<div class="col-sm-6 col-xs-8">
+			  <input type="text" class="form-control" id="m_name" name="m_name" value="<?=$req_m_name ?>" placeholder="이름 검색">
+			  <button class="bbs-search-btn"><span class="glyphicon glyphicon-search form-control-feedback"></span></button>
+			</div>
+			<div class="col-sm-6 col-xs-4 bbs-write-btn">
+			  <a href="minister_write.html" class="btn btn-success"><span class="glyphicon glyphicon-pencil"></span> 등록</a>
+			</div>
+		  </div>
+		  </form>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr class="bbs-table-thead">
+				  <td>NO</td>
+                  <td><a href="?orderBy=m_name<?=$query_string2 ?>">이름 <?if ($req_orderBy=="m_name"){ ?><span class="glyphicon glyphicon-sort-by-alphabet"></span><?} ?></a> </td>
+                  <td><a href="?orderBy=m_mgr<?=$query_string2 ?>">자격 <?if ($req_orderBy=="m_mgr"){ ?><span class="glyphicon glyphicon-sort-by-alphabet"></span><?} ?></a></td>
+                  <td><a href="?orderBy=m_position<?=$query_string2 ?>">직책 <?if ($req_orderBy=="m_position"){ ?><span class="glyphicon glyphicon-sort-by-alphabet"></span><?} ?></a></td>
+                  <td><a href="?orderBy=m_pioneer<?=$query_string2 ?>">파/전 <?if ($req_orderBy=="m_pioneer"){ ?><span class="glyphicon glyphicon-sort-by-alphabet"></span><?} ?></a></td>
+                  <td>휴대폰</td>
+                </tr>
+              </thead>
+              <tbody>
+			<?
+			//리스트 시작
+			$num=$total_row-(($ipage-1/$page_size)*$page_size)+9; //한페이지에 임의의 목록이 나오는 경우 계산방식
+			while($rs=mysql_fetch_array($result)){
+				$m_idx=$rs["m_idx"];
+				$m_name=$rs["m_name"];
+				$m_hp=$rs["m_hp"];
+				$m_mgr=$rs["m_mgr"];
+				$m_position=$rs["m_position"];
+				$m_pioneer=$rs["m_pioneer"];
+				$m_sex=$rs["m_sex"];
+
+				if ($m_sex==1){
+					$str_sex="형제";
+				}else if ($m_sex==2){
+					$str_sex="자매";
+				}
+
+				$str_mgr="";
+				if (strpos($m_mgr,"1")>-1){
+					$str_mgr="관리자1";
+				}else if (strpos($m_mgr,"2")>-1){
+					$str_mgr="관리자2";
+				}else if (strpos($m_mgr,"3")>-1){
+					$str_mgr="인도자";
+				}else if (strpos($m_mgr,"4")>-1){
+					$str_mgr="보조자";
+				}
+
+				switch ($m_position) {
+					case "1":
+						$str_position="전도인";
+						break;
+					case "2":
+						$str_position="봉종";
+						break;
+					case "3":
+						$str_position="장로";
+						break;
+					case "4":
+						$str_position="순감";
+						break;
+				}
+				switch ($m_pioneer) {
+					case "1":
+						$str_pioneer="전도인";
+						break;
+					case "2":
+						$str_pioneer="정파";
+						break;
+					case "3":
+						$str_pioneer="특파";
+						break;
+					case "4":
+						$str_pioneer="야외선교인";
+						break;
+					case "5":
+						$str_pioneer="순감";
+						break;
+					case "0":
+						$str_pioneer="미침례";
+						break;
+				}
+
+			?>
+                <tr>
+				  <td><?=$num ?></td>
+                  <td><a href="minister_view.html?m_idx=<?=$m_idx ?><?=$query_string2 ?>&orderBy=<?=$req_orderBy ?>"><?=$m_name ?> <?=$str_sex ?></a></td>
+                  <td><?=$str_mgr ?></td>
+                  <td><?=$str_position ?></td>
+                  <td><?=$str_pioneer ?></td>
+                  <td><a href="tel:<?=$m_hp ?>"><?=$m_hp ?></a></td>
+                </tr>
+			<?
+			$num--;
+			}//end while
+			?>
+
+              </tbody>
+            </table>
+          </div>
+
+
+		<?
+		paging($ipage, $total_row, $page_size, $page_list_size, $query_string."&orderBy=".$req_orderBy);
+		?>
+
+
+
+
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>

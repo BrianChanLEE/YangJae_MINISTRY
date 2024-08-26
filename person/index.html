@@ -1,0 +1,115 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>개인구역</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+<?
+$m_idx=$_SESSION['m_idx'];
+
+
+$sql="
+	SELECT *
+		,(select ministry_start_date from ministry_list where map_sub_idx=T.map_sub_idx) as ministry_start_date
+		,(select ministry_end_date from ministry_list where map_sub_idx=T.map_sub_idx) as ministry_end_date
+	FROM (
+		SELECT *,
+			(SELECT ministry_member_idx FROM ministry_list WHERE map_sub_idx = a.map_sub_idx AND ministry_date IS NULL) AS aa
+		FROM map_normal_sub a
+	)T
+	WHERE aa = '$m_idx'";
+
+$result=mysql_query($sql);
+$num_rows = mysql_num_rows($result);
+?>
+
+    <div class="page-home">
+      <div class="container">	  
+<?
+if ($num_rows>0){
+?>
+		<div class="row panel panel-success">
+		  <div class="panel-heading">개인구역</div>
+		  <div class="panel-body">구역을 선택하여 봉사를 시작하세요.</div>
+		</div>
+<?
+}else{
+?>	
+		<div class="row panel panel-success">
+		  <div class="panel-heading">개인구역</div>
+		  <div class="panel-body">구역이 없습니다.</div>
+		</div>
+<?
+}
+?>
+		<div class="row">
+			<table class="table table-hover">
+
+<?
+while($rs=mysql_fetch_array($result)){
+
+	$map_sub_idx=$rs[map_sub_idx];
+	$map_sub_no=$rs[map_sub_no];
+	$map_sub_info=$rs[map_sub_info];
+	$map_sub_cnt=$rs[map_sub_cnt];
+	$map_sub_addr=$rs[map_sub_addr];
+	$map_sub_member_idx=$rs[map_sub_member_idx];
+	//$map_sub_member_name=$rs[map_sub_member_name];
+	$ministry_start_date=$rs[ministry_start_date];
+	$ministry_end_date=$rs[ministry_end_date];
+
+	
+	$href2="onclick=\"location.href='person_ministry_list.html?map_sub_idx=".$map_sub_idx."'\"";
+	?>
+				<tr style="cursor:pointer;" <?=$href2 ?>>
+					<td><div class="person-map-sub-no"><?=$map_sub_no ?></div></td>
+					<td><div class="person-map-sub-info">
+						<?if ($map_sub_info!=""){ ?>
+						[ <?=$map_sub_info ?> ]
+						<?}else{?>
+						[ 구역명없음 ]
+						<?}?>
+						</div>			
+						시작일 : <?=$ministry_start_date ?> / 
+						종료일 : <?=$ministry_end_date ?>
+					</td>
+				</tr>
+<?
+}
+?>
+		
+			</table>
+		</div>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+
+//-->
+</script>
+
+

@@ -1,0 +1,96 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+$m_mgr = $_SESSION['m_mgr'];  //1-관리자1   2-관리자2   3-인도자   4-보조자
+$m_position = $_SESSION['m_position']; //1-전도인   2-봉사의종   3-장로   4-순회감독자
+
+$req_bbs_idx=$_REQUEST["bbs_idx"];
+$req_page=$_REQUEST["page"];
+
+
+$sql="SELECT * FROM bbs WHERE bbs_idx='$req_bbs_idx'";
+$result_type=mysql_query($sql);
+$rs=mysql_fetch_array($result_type);
+$bbs_subject=$rs[bbs_subject];
+$bbs_content=$rs[bbs_content];
+$bbs_isNotice=$rs[bbs_isNotice];
+$bbs_isElder=$rs[bbs_isElder];
+$bbs_regdate=substr($rs[bbs_regdate], 0, 10);
+$bbs_editdate=substr($rs[bbs_editdate], 0, 10);
+
+
+if ($isElder=="1"){
+	if ($m_position>=3){
+		
+	}else{
+		echo "<script>location.href='bbs_list.html'</script>";
+		exit;
+	}
+}
+
+
+if ($bbs_isNotice==0){
+	$str_notice="&nbsp;<span class='label label-success'>일반</span>";
+}else{
+	$str_notice="&nbsp;<span class='label label-danger'>중요</span>";
+}
+
+if (!$req_page || $req_page < 0){
+  $req_page=1;	//$page값이 안넘어 오거나 잘못된(음수)값이 넘어오는 경우 0으로 처리
+}
+
+$query_string2.="page=".$req_page."&elder=".$bbs_isElder;
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+<script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/bbs/bbs_list.html?<?=$query_string2 ?>" id="back"><img src="/img/icon-back.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="bbs_list.html?<?=$query_string2 ?>">공지사항</a> > <a href="#"><strong>보기</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+
+    <div class="page-home">
+      <div class="container">
+	  
+		<div class="row alert alert-success">
+			<?=$str_notice ?>
+			
+			<strong><?=$bbs_subject ?></strong>
+
+			<div class="pull-right">
+			<?=$bbs_editdate ?>
+			</div>
+		</div>
+
+		<div class="col-sm-12 padding10 marginbottom10">
+			<?=$bbs_content ?>
+		</div>
+		
+      </div>
+
+
+      <div class="container marginbottom100">
+		<a href="bbs_list.html?<?=$query_string2 ?>" class='btn btn-success btn-small'><span class="glyphicon glyphicon-th-list"></span> 목록</a>
+	  </div>
+
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>

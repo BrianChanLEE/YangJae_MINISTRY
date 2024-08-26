@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+	
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+
+
+	$(document).ready(function(){
+
+		$.ajax({
+			type: "json",
+			url: "https://maps.googleapis.com/maps/api/place/textsearch/json",
+			data: "query=%EA%B2%BD%EC%88%98%EB%8C%80%EB%A1%9C%20157-40&key=AIzaSyBPIYDeV2uX3ykRGHxHHJO0NKEG6VGiU0c",
+			success: function (msg) {
+
+				alert(msg);
+
+			},
+			error: function (request, status, error) {
+				//alert(status + ' : ' + error);
+			}
+		});
+
+
+
+	});	
+
+
+
+
+
+
+
+      function initMap() {
+		var myLatLng = {lat: 37.2415658, lng: 127.0162613};
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 16,
+          center: myLatLng
+        });
+
+        var marker = new google.maps.Marker({
+          position: myLatLng,
+          map: map,
+          title: 'Hello World!'
+        });
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPIYDeV2uX3ykRGHxHHJO0NKEG6VGiU0c&callback=initMap"
+    async defer></script>
+  </body>
+</html>
+          center: {lat: -34.397, lng: 150.644},
+		  center: {lat: -43.479, lng: 172.560},
+ -43.479108 172.560437
+
+https://maps.googleapis.com/maps/api/place/textsearch/json?query=123+main+street&key=AIzaSyBPIYDeV2uX3ykRGHxHHJO0NKEG6VGiU0c

@@ -1,0 +1,194 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+if (!mgr_check("1")){
+	echo "<script>location.href='/home/';</script>";
+	exit;
+}
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<style type="text/css">
+
+</style>
+<head>
+<?include "../include/head.html";?>
+<script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
+<!-- <script type="text/javascript" src="//cdn.ckeditor.com/4.7.3/full-all/ckeditor.js"></script> -->
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/admin/" id="back"><img src="/img/icon-back.png"></a> 
+          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
+		  <div class="navpress">
+			  <a href="/admin/">관리자</a> > <a href="#"><strong>사이트설정</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+    <div class="page">
+      <div class="container">
+
+		<div class=" marginbottom10">
+			<span class="glyphicon glyphicon-info-sign"></span> 회중명, 봉사안내 기본메세지를 수정할 수 있습니다.
+	    </div>
+		
+<?
+$sql="select * from congregation";
+$result=mysql_query($sql);
+$rs=mysql_fetch_array($result);
+?>
+		<div class="row marginbottom10">
+			<label class="col-sm-3">회중명 :</label>
+			<div class="col-sm-6 form-group">
+				<input type="text" id="cong_name" name="cong_name" value="<?=$rs[cong_name] ?>" class="form-control" placeholder="50자이내" maxlength="200">
+			</div>
+			<div class="col-sm-3">
+				<button class="btn btn-success btn-sm" onclick="cong_save()"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+			</div>
+	    </div>
+
+<?
+$sql1="select * from site_option where option_idx=5";
+$result1=mysql_query($sql1);
+$rs1=mysql_fetch_array($result1);
+?>
+		<div class="row marginbottom10">
+			<label class="col-sm-3">안내사항 기본메세지 :</label>
+			<div class="col-sm-6 form-group">
+				<input type="text" id="ministry_notice" name="ministry_notice" value="<?=$rs1[option_fullname] ?>" class="form-control" placeholder="200자이내" maxlength="200">
+			</div>
+			<div class="col-sm-3">
+				<button class="btn btn-success btn-sm" onclick="notice_save()"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+			</div>
+	    </div>
+
+		<div class=" marginbottom10">
+			<span class="glyphicon glyphicon-info-sign"></span> 메뉴를 '보임/감춤' 설정할 수 있습니다.
+	    </div>
+
+<?
+$sql="select * from site_option where option_idx in (1,2,3,4,6,7) order by option_idx";
+$result=mysql_query($sql);
+while($rs2=mysql_fetch_array($result)){
+	$option_idx=$rs2[option_idx];
+	$option_name=$rs2[option_name];
+	$option_fullname=$rs2[option_fullname];
+	$option_yn=$rs2[option_yn];
+
+	$option_checked=($option_yn==1)?"checked":"";
+?>
+	<div class="row  marginbottom10">
+		<label class="col-sm-3"><?=$option_fullname ?>:</label>
+<?
+	if ($option_idx==4){
+	?>
+		<label>
+		  <select id="<?=$option_name ?>" class="form-control">
+		<?
+		for($count = 5 ; $count <=24 ; $count++){
+		?>
+			<option value="<?=$count ?>"<?=($option_yn==$count)?" selected":""?>><?=$count ?>명</option>
+		<?
+		}
+		?>
+		  </select>
+		</label>
+	<?
+	}else{
+	?>
+		<label class="col-sm-6 form-group switch2">
+		  <input type="checkbox" id="<?=$option_name ?>" <?=$option_checked ?>>
+		  <span class="slider2 round2"></span>
+		</label><br>
+	<?
+	}
+?>
+	</div>
+<?
+}
+?>
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+
+	$(".switch2 input").click(function (){
+	
+		option_name=this.id;
+		option_yn = $("#"+this.id).prop("checked");
+		option_yn = (option_yn==true)?"1":"0";
+	
+		option_save(option_name, option_yn);
+
+	});
+
+	$("#ministry_number").change(function (){
+		option_name=this.id;
+		option_yn = $("#"+this.id).val();
+
+		if (option_yn < 5 || option_yn > 24) {
+			alert("5~24 사이로 입력하세요");
+			return;
+		}
+
+		option_save(option_name, option_yn);
+	});
+
+	function option_save(option_name, option_yn){
+
+		$.ajax({
+			type: "post",
+			url: "site_option_work.php",
+			data: "work=option_save&option_name=" + option_name + "&option_yn=" + option_yn,
+			success: function (msg) {	
+
+			}
+		});
+
+	}
+
+	function cong_save(){
+	
+		var cong_name=$("#cong_name").val();
+
+		$.ajax({
+			type: "post",
+			url: "site_option_work.php",
+			data: "work=cong_save&cong_name=" + cong_name,
+			success: function (msg) {	
+				alert("저장되었습니다.");
+			}
+		});
+
+	}
+
+	function notice_save(){
+	
+		var ministry_notice=$("#ministry_notice").val();
+
+		$.ajax({
+			type: "post",
+			url: "site_option_work.php",
+			data: "work=notice_save&ministry_notice=" + ministry_notice,
+			success: function (msg) {	
+				alert("저장되었습니다.");
+			}
+		});
+
+	}
+
+//-->
+</script>

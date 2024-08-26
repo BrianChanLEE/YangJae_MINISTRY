@@ -1,0 +1,172 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+$req_map_sub_info=$_REQUEST["map_sub_info"];
+$req_map_sub_addr=$_REQUEST["map_sub_addr"];
+$req_h=$_REQUEST["h"];
+
+
+if ($req_map_sub_info==""){
+	$req_map_sub_info = "정보없음";
+}
+if ($req_map_sub_addr==""){
+	$req_map_sub_addr = "경기도 안성시 공도읍 양기리 377";
+}
+if ($req_h==""){
+	$req_h = "500";
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>주소로 장소 표시하기</title>
+    
+<style type="text/css">
+	body{
+		margin:0;
+		padding:0;
+	}
+    #container {overflow:hidden;height:100%;position:relative;}
+    #btnRoadview,  #btnMap {position:absolute;top:5px;left:5px;padding:7px 12px;font-size:14px;border: 1px solid #dbdbdb;background-color: #fff;border-radius: 2px;box-shadow: 0 1px 1px rgba(0,0,0,.04);z-index:1;cursor:pointer;}
+    #btnRoadview:hover,  #btnMap:hover{background-color: #fcfcfc;border: 1px solid #c1c1c1;}
+    #container.view_map #mapWrapper {z-index: 10;}
+    #container.view_map #btnMap {display: none;}
+    #container.view_roadview #mapWrapper {z-index: 0;}
+    #container.view_roadview #btnRoadview {display: none;}
+    
+</style>
+
+</head>
+<body>
+
+
+    <div id="container" class="view_map">
+        <div id="mapWrapper" style="width:100%;height:1500px;position:relative;">
+            <div id="map" style="width:100%;height:1500px;"></div> <!-- 지도를 표시할 div 입니다 -->
+            <input type="button" id="btnRoadview" onclick="toggleMap(false)" title="로드뷰 보기" value="로드뷰">
+        </div>
+        <div id="rvWrapper" style="width:100%;height:1500px;position:absolute;top:0;left:0;">
+            <div id="roadview" style="height:1500px;"></div> <!-- 로드뷰를 표시할 div 입니다 -->
+            <input type="button" id="btnMap" onclick="toggleMap(true)" title="지도 보기" value="지도">
+        </div>
+        
+        
+
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=<?=DAUM_MAP_API ?>&libraries=services"></script>
+<script>
+    var container = document.getElementById('container'), // 지도와 로드뷰를 감싸고 있는 div 입니다
+        mapWrapper = document.getElementById('mapWrapper'), // 지도를 감싸고 있는 div 입니다
+        btnRoadview = document.getElementById('btnRoadview'), // 지도 위의 로드뷰 버튼, 클릭하면 지도는 감춰지고 로드뷰가 보입니다 
+        btnMap = document.getElementById('btnMap'), // 로드뷰 위의 지도 버튼, 클릭하면 로드뷰는 감춰지고 지도가 보입니다 
+        rvContainer = document.getElementById('roadview'), // 로드뷰를 표시할 div 입니다
+        mapContainer = document.getElementById('map'); // 지도를 표시할 div 입니다
+
+// 지도와 로드뷰 위에 마커로 표시할 특정 장소의 좌표입니다 
+//var placePositions = new kakao.maps.LatLng(33.450701, 126.570667);
+var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+    mapOption = {
+        center: new daum.maps.LatLng(37.000922, 127.195686), // 지도의 중심좌표
+        //center: placePositions, // 지도의 중심좌표
+        level: 3 // 지도의 확대 레벨
+    };  
+
+// 지도를 생성합니다    
+var map = new daum.maps.Map(mapContainer, mapOption); 
+
+
+// 로드뷰 객체를 생성합니다 
+var roadview = new kakao.maps.Roadview(rvContainer);
+
+var roadviewClient = new kakao.maps.RoadviewClient();
+
+// 주소-좌표 변환 객체를 생성합니다
+var geocoder = new daum.maps.services.Geocoder();
+
+// 주소로 좌표를 검색합니다
+geocoder.addressSearch('<?=$req_map_sub_addr ?>', function(result, status) {
+
+    // 정상적으로 검색이 완료됐으면 
+     if (status === daum.maps.services.Status.OK) {
+
+        var coords = new daum.maps.LatLng(result[0].y, result[0].x);
+
+        var placePosition = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+        //roadview.setPanoId(1023434522, placePosition );
+        roadviewClient.getNearestPanoId(placePosition, 50, function(panoId) {
+        roadview.setPanoId(panoId, placePosition); //panoId와 중심좌표를 통해 로드뷰 실행
+        });
+        roadview.setViewpoint({
+            pan: 321,
+            tilt: 0,
+            zoom: 0
+        });
+        
+        // 결과값으로 받은 위치를 마커로 표시합니다
+        var marker = new daum.maps.Marker({
+            map: map,
+            position: placePosition
+        });
+        // 로드뷰 초기화가 완료되면 
+        kakao.maps.event.addListener(roadview, 'init', function() {
+
+        // 로드뷰에 특정 장소를 표시할 마커를 생성하고 로드뷰 위에 표시합니다 
+        var rvMarker = new kakao.maps.Marker({
+            position: placePosition,
+            map: roadview
+        });
+        });
+        // 인포윈도우로 장소에 대한 설명을 표시합니다
+        var infowindow = new daum.maps.InfoWindow({
+            content: '<div style="width:150px;text-align:center;padding:6px 0;"><?=$req_map_sub_info ?></div>'
+        });
+        infowindow.open(map, marker);
+
+        
+        map.setCenter(placePosition);
+    } 
+});    
+
+function toggleMap(active) {
+    if (active) {
+
+        // 지도가 보이도록 지도와 로드뷰를 감싸고 있는 div의 class를 변경합니다
+        container.className = "view_map"
+    } else {
+
+        // 지도가 숨겨지도록 지도와 로드뷰를 감싸고 있는 div의 class를 변경합니다
+        container.className = "view_roadview"   
+    }
+}
+
+// 지도 확대, 축소 컨트롤에서 확대 버튼을 누르면 호출되어 지도를 확대하는 함수입니다
+function zoomIn() {
+    map.setLevel(map.getLevel() - 1);
+}
+
+// 지도 확대, 축소 컨트롤에서 축소 버튼을 누르면 호출되어 지도를 확대하는 함수입니다
+function zoomOut() {
+    map.setLevel(map.getLevel() + 1);
+}
+
+function setMapType(maptype) { 
+    var roadmapControl = document.getElementById('btnRoadmap');
+    var skyviewControl = document.getElementById('btnSkyview'); 
+    if (maptype === 'roadmap') {
+        map.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);    
+        roadmapControl.className = 'selected_btn';
+        skyviewControl.className = 'btn';
+    } else {
+        map.setMapTypeId(kakao.maps.MapTypeId.HYBRID);    
+        skyviewControl.className = 'selected_btn';
+        roadmapControl.className = 'btn';
+    }
+}
+</script>
+
+
+</body>
+</html>

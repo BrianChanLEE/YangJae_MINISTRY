@@ -1,0 +1,143 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+
+$m_idx=$_SESSION['m_idx'];
+
+
+
+//$signdate = "2010-03-22 21:05:00"; //DB의 datetime형식이 오늘 21시 05분인경우.
+//$thisTime=date("Y-m-d H:i:s"); // 현재시간 23시 35임..
+
+//$someTime=strtotime($thisTime)-strtotime("$signdate GMT"); // 현재시간에서 작성된 시간을 뺌
+//echo date('H시 i분 s초 지났습니다.', $someTime);
+
+
+
+//이전 날짜에 대한 봉사 참여자들의 기록은 모두 삭제한다.
+//빠져나오지 않은 전도인들을 삭제하는 기능.
+$today=date("Y-m-d");
+$sql="update tel_service set tel_member_idx='' where tel_service_date < '".$today."' ";
+$result=mysql_query($sql);
+
+
+$sql="select * from tel_info where tel_idx=1";
+$result=mysql_query($sql);
+$rs=mysql_fetch_array($result);
+
+$tel_info_1=$rs[tel_info];
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>전화봉사</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+	<div class="alert alert-success text-center" role="alert"><strong>전화봉사</strong></div> -->
+
+
+    <div class="page-home">
+      <div class="container">	  
+
+		<div class="row panel panel-success">
+		  <div class="panel-heading">로드뷰</div>
+		  <div class="panel-body"><?=$tel_info_1 ?></div>
+		</div>
+
+
+          <div class="row">
+            <table class="table table-hover">
+              <tbody>
+			<?
+				$sql="select ta.tel_idx, ta.tel_no, ta.tel_member_idx, ta.tel_service_date, ifnull(cnts,0) allcount, ifnull(ucnts,0) nowcount, case when ifnull(cnts,0) - ifnull(ucnts,0) > 0 then 1 else 2 end listyn ";
+				$sql= $sql. " , (select m_name from member where m_idx=ta.tel_member_idx) as tel_member_name  from tel_service ta ";
+				$sql= $sql. " left outer join ( ";
+				$sql= $sql. " select tel_idx, count(*) cnts from tel_list t group by tel_idx  ) aa on ta.tel_idx = aa.tel_idx ";
+				$sql= $sql. " left outer join ( ";
+				$sql= $sql. " select tel_idx, count(*) ucnts from ";
+				$sql= $sql. " (select t.tel_idx, t.tel_list_idx from tel_list t join tel_content_list tl on t.tel_list_idx = tl.tel_list_idx group by t.tel_idx, t.tel_list_idx) bb ";
+				$sql= $sql. " group by tel_idx  ) bb ";
+				$sql= $sql. " on ta.tel_idx = bb.tel_idx ";
+				$sql= $sql. " order by listyn, ta.tel_idx ";
+				// echo $sql;
+				$result=mysql_query($sql);
+
+			//리스트 시작
+			$num=$total_row-(($ipage/10)*10); //한페이지에 임의의 목록이 나오는 경우 계산방식
+			while($rs=mysql_fetch_array($result)){
+				$tel_idx=$rs["tel_idx"];
+				$tel_no=$rs["tel_no"];
+				$tel_member_idx=$rs["tel_member_idx"];
+				$tel_member_name=$rs["tel_member_name"];
+				$tel_service_date=$rs["tel_service_date"];
+				$allcount=$rs["allcount"];
+				$nowcount=$rs["nowcount"];
+			?>
+                <tr>
+                  <td><?=$tel_no ?></td>
+                  <td><?=$tel_member_name ?></td>
+                  <td align="right">
+				  (총 <?=$allcount ?>: 방문 <?=$nowcount ?>)
+				  <?if ($tel_member_idx==0){ ?>
+				  <button type="button" class="btn btn-success btn-sm" onclick="tel_start('<?=$tel_idx ?>')">참여하기</button>
+				  <?}else if($tel_member_idx==$m_idx){ ?>
+				  <button type="button" class="btn btn-warning btn-sm" onclick="location.href='tel_list.html?tel_idx=<?=$tel_idx ?>'">봉사하기</button>
+				  <?}else if($tel_member_idx!=$m_idx){?>
+				  <button type="button" class="btn btn-warning btn-sm" onclick="location.href='tel_list.html?tel_idx=<?=$tel_idx ?>'">함께하기</button>
+				  <?} ?>
+				  </td>
+                </tr>
+			<?
+			$num--;
+			}//end while
+			?>
+
+              </tbody>
+            </table>
+          </div>
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function tel_start(tel_idx) {
+
+		$.ajax({
+			type: "post",
+			url: "tel_work.php",
+			data: "work=tel_start&tel_idx="+tel_idx,
+			success: function (msg) {
+				if (msg!="")
+				{
+					alert(msg);
+					location.reload();	
+				}
+				location.href="tel_list.html?tel_idx="+tel_idx;
+			}
+		});
+	}
+//-->
+</script>
+
+

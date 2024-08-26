@@ -1,0 +1,55 @@
+<?
+//include "index_parking.html";
+//exit;
+
+include "include/db_connect.php";
+include "include/function.php";
+
+session_home_check();
+
+$sql="SELECT * FROM congregation WHERE cong_idx='1'";
+$result=mysql_query($sql);
+$rs = mysql_fetch_array($result, MYSQL_ASSOC);
+
+$cong_name=$rs["cong_name"];
+
+
+
+//echo md5(uniqid(mt_rand(), true));
+$m_token = $_SESSION['m_token'] = md5(uniqid(mt_rand(), true));
+?>
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "./include/head.html";?>
+<link rel="stylesheet" href="css/login.css">
+</head>
+<body>  
+<div class="container">
+
+	<form method="post" action="logincheck.php" class="form-signin">
+	
+		<h5 class="form-signin-heading">온라인 구역 카드</h5>
+		
+		<div class="congregation-title">
+			<?=$cong_name ?>
+		</div>
+
+		<input type="text" name="m_name" id="m_name" placeholder="이름" class="form-control"/>
+		<input type="password" name="m_pw" id="m_pw" placeholder="비밀번호" class="form-control"/>
+		<input type="hidden" name="m_token" id="m_token" value="<?=$m_token ?>">
+
+		<label><input type="checkbox" name="m_logincheck" id="m_logincheck"> 자동로그인 </label>
+		<button type="submit" class="btn btn-success form-control">로그인</button>
+
+	</form>
+
+</div><!-- /container -->
+</body>
+</html>
+<script src="main.js"></script>

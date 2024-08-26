@@ -1,0 +1,97 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/service/"><img src="/img/icon-home.png"></a>
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>홈</strong></a>
+		  </div>
+      </div>
+    </nav> -->
+
+    <div class="page-home">
+      <div class="container">	  
+
+
+		<div class="row panel panel-success">
+		  <div class="panel-heading">비밀번호변경</div>
+		  <div class="panel-body">
+		  
+		  <label>변경할 비밀번호</label>
+			<input type="password" id="pwd1" class="form-control" placeholder="비밀번호입력">
+		  <label>변경 비밀번호 확인</label>
+			<input type="password" id="pwd2" class="form-control" placeholder="비밀번호입력">
+
+
+		  </div>
+		</div>
+
+
+      </div>
+
+
+	  <div class=" text-center" >
+	    <button type="button" class="btn btn-success" onclick="info_save()"><span class="glyphicon glyphicon-ok"></span> 저장</button>
+	  </div>
+
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script>
+
+
+	function info_save() {
+
+		var pwd1 = $("#pwd1").val();
+		var pwd2 = $("#pwd2").val();
+
+		if (pwd1=="" || pwd2==""){
+			alert("비밀번호를 입력하세요");
+			$("#pwd1").focus();
+			return;
+		}
+		if (pwd1!=pwd2){
+			alert("비밀번호가 일치하지 않습니다\n다시 입력하세요");
+			$("#pwd1").val("");
+			$("#pwd2").val("");
+			return;
+		}
+
+
+
+		$.ajax({
+			type: "post",
+			url: "info_work.php",
+			data: "work=info_save&pwd=" + pwd1,
+			success: function (msg) {
+				if (msg==""){
+					alert("비밀번호가 변경되었습니다\n다시 로그인해주세요.");
+					location.href="/";
+				}else{
+					alert(msg);
+				}
+			}
+		});
+	}	
+
+
+
+</script>

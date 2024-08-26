@@ -1,0 +1,159 @@
+<?
+include "../include/db_connect.php";
+include "../include/function.php";
+
+session_check();
+
+$req_tel_write=$_REQUEST["tel_write"];
+$req_tel_idx=$_REQUEST["tel_idx"];
+$req_tel_list_idx=$_REQUEST["tel_list_idx"];
+
+
+$m_idx=$_SESSION['m_idx'];
+$sql="select * from tel_service where tel_member_idx='$m_idx'";
+$result=mysql_query($sql);
+$rs=mysql_fetch_array($result);
+$tel_member_idx=$rs[tel_member_idx];
+
+if ($tel_member_idx=="" && !mgr_check("1,2")){
+	//echo "<script>location.href='/tel/'</script>";
+}
+
+
+
+$sql="select * from tel_list where tel_list_idx='$req_tel_list_idx'";
+$result=mysql_query($sql);
+$rs=mysql_fetch_array($result);
+
+$tel_list_number=$rs[tel_list_number];
+$tel_list_name=$rs[tel_list_name];
+$tel_list_addr=$rs[tel_list_addr];
+$tel_list_refusal=$rs[tel_list_refusal];
+$tel_list_ban=$rs[tel_list_ban];
+$tel_list_sunday=$rs[tel_list_sunday];
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "../include/head.html";?>
+</head>
+<body> 
+
+    <!-- Fixed navbar -->
+    <!-- <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+          <a class="navbar-brand" href="/home/" id="back"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a>
+		  <div class="navpress">
+			  <a href="#"><strong>전화봉사</strong></a>
+		  </div>
+      </div>
+    </nav>
+
+	<div class="alert alert-success text-center" role="alert">전화봉사</div> -->
+
+
+    <div class="page-home">
+      <div class="container">	  
+
+		<div class="row alert well" role="alert">
+			전화번호 : <?=$tel_list_number ?><br>
+			이름 : <?=$tel_list_name ?><br>
+			주소 : <?=$tel_list_addr ?>
+			<a href="tel_list.html?tel_idx=<?=$req_tel_idx ?>" class="btn btn-default btn-sm pull-right">목록</a>
+		</div>
+
+		<?if ($req_tel_write=="Y"){ ?>
+		<form name="form1" method="post" action="tel_content_save.php" onsubmit="return valid()">
+			<input type="hidden" name="tel_idx" value="<?=$req_tel_idx ?>">
+			<input type="hidden" name="tel_list_idx" value="<?=$req_tel_list_idx ?>">
+			<textarea name="tel_content_content" id="tel_content_content" rows="5" cols="" class="form-control marginbottom10" placeholder="대화내용기록"></textarea>
+		
+			<div class="form-group">
+				<label class="checkbox-inline"><input type="checkbox" name="tel_list_refusal" value="Y" <?=($tel_list_refusal=="Y")?"checked":"" ?>> 전화거절</label>
+				<label class="checkbox-inline"><input type="checkbox" name="tel_list_ban" value="Y" <?=($tel_list_ban=="Y")?"checked":"" ?>> 전화금지</label>
+				<label class="checkbox-inline"><input type="checkbox" name="tel_list_sunday" value="Y" <?=($tel_list_sunday=="Y")?"checked":"" ?>> 일요일부재</label>
+				<button type="submit" class="btn btn-success btn-sm pull-right" id="btn-save">저장</button>
+			</div>
+		</form>
+		<?}?>
+		
+
+
+
+
+		<?
+		$sql="SELECT *, (select m_name from member where m_idx=a.tel_content_member_idx) as tel_content_member_name FROM tel_content_list a WHERE tel_list_idx='$req_tel_list_idx' order by tel_content_date desc";
+		$result=mysql_query($sql);
+		while($rs=mysql_fetch_array($result)){
+			$tel_content_idx=$rs["tel_content_idx"];
+			$tel_content_content=$rs["tel_content_content"];
+			$tel_content_member_name=$rs["tel_content_member_name"];
+			$tel_content_date=$rs["tel_content_date"];
+
+			//$tel_content_content=nl2br($tel_content_content);
+		?>
+		<div class="row tel-list" id="list_<?=$tel_content_idx ?>">
+			<h2 class="tel-list-title">
+				  <?=$tel_content_date ?> <?=$tel_content_member_name ?>
+			</h2>
+			<div class="tel-list-content">
+				  <?=$tel_content_content ?>
+			</div>
+		</div>
+		<?
+		$num--;
+		}//end while
+		?>
+
+
+      </div>
+    </div>
+
+<?include "../include/footer.html";?>
+
+</body>
+</html>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+<!--
+	function valid() {
+
+		var content=$("#tel_content_content").val().replace(/ /g, '');
+		if(content==""){
+			$("#tel_content_content").val("");
+			$("#tel_content_content").focus();
+			return false;
+		}
+
+	}
+	function valid2() {
+
+		var content=$("#tel_content_content2").val().replace(/ /g, '');
+		if(content==""){
+			$("#tel_content_content2").val("");
+			$("#tel_content_content2").focus();
+			return false;
+		}
+
+	}
+
+	function tel_del(tel_write, tel_idx, tel_list_idx, tel_content_idx){
+
+		if (!confirm("삭제하시겠습니까?"))	{
+			return;
+		}
+
+		$.get("tel_content_del.php",
+		{
+			tel_content_idx: tel_content_idx
+		},
+		function(data, status){
+			$("#list_"+tel_content_idx).remove();
+		});		
+	}
+
+//-->
+</script>
+
+

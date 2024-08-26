@@ -1,0 +1,171 @@
+.ll-skin-jw-ministry {
+	font-size: 90%;
+}
+
+.ll-skin-jw-ministry .ui-widget {
+	font-family: Helvetica Trebuchet MS,Tahoma,Verdana,Arial,sans-serif;
+}
+
+.ll-skin-jw-ministry .ui-datepicker {
+	padding: 0;
+}
+
+.ll-skin-jw-ministry .ui-widget-content {
+/*	border: 0px;*/
+	background: #fff;
+	-moz-box-shadow: 0 1px 3px rgba(0,0,0,.19);
+	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,.19);
+/*	box-shadow: 0 1px 3px rgba(0,0,0,.19);*/
+}
+
+.ll-skin-jw-ministry .ui-datepicker-header {
+/*	border:0px;*/
+	font-family: "Myriad Pro", sans-serif;
+/*	color: #fff;*/
+	padding: 0;
+/*	border-top: 1px solid #b42b0c;*/
+/*	border-bottom: none;*/
+	overflow: hidden;
+	text-transform: uppercase;
+/*	text-shadow: 0 -1px 0 rgba(0,0,0,.35);*/
+	border-radius: 4px 4px 0 0;
+	-webkit-border-radius: 4px 4px 0 0;
+	-moz-border-radius: 4px 4px 0 0;
+/*	background: #54a556;*/
+/*	background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iaGF0MCIgZ3JhZGllbnRVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giIHgxPSI1MCUiIHkxPSIxMDAlIiB4Mj0iNTAlIiB5Mj0iLTEuNDIxMDg1NDcxNTIwMmUtMTQlIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2IzMmIwYiIgc3RvcC1vcGFjaXR5PSIxIi8+CjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2NkMzAwYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgIDwvbGluZWFyR3JhZGllbnQ+Cgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0idXJsKCNoYXQwKSIgLz4KPC9zdmc+);*/
+	background-image: -moz-linear-gradient(bottom, #99ca9a 0%, #54a556 100%);
+	background-image: -o-linear-gradient(bottom, #99ca9a 0%, #54a556 100%);
+	background-image: -webkit-linear-gradient(bottom, #99ca9a 0%, #54a556 100%);
+	background-image: linear-gradient(to bottom, #99ca9a 0%, #54a556 100%);
+}
+
+.ll-skin-jw-ministry .ui-datepicker-header .ui-state-hover {
+	background: transparent;
+	border-color: transparent;
+	cursor: pointer;
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-title {
+	line-height: 2.2em;
+	font-weight: 600;
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-title,
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-year,
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-month{
+	font-size:16px;
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-prev, 
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-next {
+	top: -1px;
+/*	background: #d33e13;*/
+	border-radius: 0;
+	font-weight: normal;
+	border: none;
+	height: 2.2em;
+	width: 1.4em;
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-prev.ui-state-hover,
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-next.ui-state-hover {
+	background: #54a556; /*#ba2c0c;*/
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-prev {
+	left: 0;
+/*	border-right: 1px solid #a6280b;*/
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-next {
+	right: 0;
+/*	border-left: 1px solid #a6280b;*/
+}
+
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-prev span, 
+.ll-skin-jw-ministry .ui-datepicker .ui-datepicker-next span {
+	margin-top: -4px;
+	top: 40%;
+}
+
+.ll-skin-jw-ministry .ui-icon-circle-triangle-e {
+	background-image: url(images/ui-icons_ffffff_256x240.png);
+	background-position: -32px 0;
+}
+
+.ll-skin-jw-ministry .ui-icon-circle-triangle-w {
+	background-image: url(images/ui-icons_ffffff_256x240.png);
+	background-position: -96px 0;
+}
+
+.ll-skin-jw-ministry .ui-datepicker table {
+	margin: 0;
+}
+
+.ll-skin-jw-ministry .ui-datepicker th {
+	padding: .6em 0 .4em;
+	text-transform: uppercase;
+/*	color: #bbb;*/
+	font-family: "Myriad Pro";
+	font-weight: 600;
+	font-size: .8em;
+/*	border-top: 1px solid #e6e6e6;*/
+}
+
+.ll-skin-jw-ministry .ui-datepicker td {
+	border: none;
+/*	border-top: 1px solid #e6e6e6;*/
+/*	border-right: 1px solid #e6e6e6;*/
+	padding: 0;
+}
+
+.ll-skin-jw-ministry td:last-child {
+	border-right: 0;
+}
+
+.ll-skin-jw-ministry td .ui-state-default {
+	background: transparent;
+	border: none;
+	color: #2b2b2b;
+	margin: 0;
+	font-family: "Myriad Pro", sans-serif;
+	font-weight: normal;
+	text-align: center;
+}
+
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-state-hover {
+/*	background: #ededed;*/
+	color: #b32b0b;
+}
+
+.ll-skin-jw-ministry td a.ui-state-active,
+.ll-skin-jw-ministry td a.ui-state-active.ui-state-hover {
+	color: #fff;
+	text-shadow: 0 -1px 0 rgba(0,0,0,.45);
+/*	background: #cd300c;*/
+/*	background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iaGF0MCIgZ3JhZGllbnRVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giIHgxPSI1MCUiIHkxPSIxMDAlIiB4Mj0iNTAlIiB5Mj0iLTEuNDIxMDg1NDcxNTIwMmUtMTQlIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2IzMmIwYiIgc3RvcC1vcGFjaXR5PSIxIi8+CjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2NkMzAwYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgIDwvbGluZWFyR3JhZGllbnQ+Cgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0idXJsKCNoYXQwKSIgLz4KPC9zdmc+);*/
+	background-image: -moz-linear-gradient(bottom, #b32b0b 0%, #cd300c 100%);
+	background-image: -o-linear-gradient(bottom, #b32b0b 0%, #cd300c 100%);
+	background-image: -webkit-linear-gradient(bottom, #b32b0b 0%, #cd300c 100%);
+	background-image: linear-gradient(to bottom, #b32b0b 0%, #cd300c 100%);
+
+	border-radius:10px;
+/*	width:23px;*/
+/*	margin:0 auto;*/
+}
+
+
+
+
+
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-state-highlight,
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-widget-content ,
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-state-highlight,
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-widget-header,
+.ll-skin-jw-ministry .ui-datepicker-calendar .ui-state-highlight
+{
+/*    border: 1px solid #89c28a;*/
+	border-radius:10px;
+    background: #bedebf ;
+    color: #274b29;
+}

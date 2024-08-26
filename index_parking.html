@@ -1,0 +1,54 @@
+<?
+include "include/db_connect.php";
+include "include/function.php";
+
+$sql="SELECT * FROM congregation WHERE cong_idx='1'";
+$result=mysql_query($sql);
+$rs = mysql_fetch_array($result, MYSQL_ASSOC);
+
+$cong_name=$rs["cong_name"];
+?>
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<?include "./include/head.html";?>
+<style type="text/css">
+	body{
+		background-color:#e3e3e3;
+	}
+
+	.margin{
+		margin-top:200px;
+		padding:10px;
+	}
+
+	h3,h4{
+		margin:30px 0;
+	}
+</style>
+</head>
+<body>  
+<div class="container text-center margin">
+
+		
+	
+		<h3>온라인 구역 카드</h3>
+		
+		
+		<h4><?=$cong_name ?></h4>
+		
+		
+		<img src="img/loader.gif">
+		
+
+		<h3>내부 수리중입니다....</h3>
+
+
+</div><!-- /container -->
+</body>
+</html>
