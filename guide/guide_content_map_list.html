@@ -1,360 +1,354 @@
 <?
-include "../include/db_connect.php";
-include "../include/function.php";
+include "../include/db_connect.php"; // 데이터베이스 연결 파일 포함
+include "../include/function.php"; // 공통 함수 파일 포함
 
-session_check();
+session_check(); // 세션 확인
 
+// 관리자 권한 확인 (1, 2, 3 등급만 접근 가능)
 if (!mgr_check("1,2,3")){
-	echo "<script>location.href='/home/';</script>";
+    echo "<script>location.href='/home/';</script>"; // 권한이 없으면 홈으로 리다이렉트
 }
 
-$req_map_sub_idx=$_REQUEST["map_sub_idx"];
-$req_map_idx=$_REQUEST["map_idx"];
-$req_map_service=$_REQUEST["map_service"];
-$req_map_review=$_REQUEST["map_review"];
+// 요청 변수 설정
+$req_map_sub_idx = $_REQUEST["map_sub_idx"];
+$req_map_idx = $_REQUEST["map_idx"];
+$req_map_service = $_REQUEST["map_service"];
+$req_map_review = $_REQUEST["map_review"];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
 <head>
-<?include "../include/head.html";?>
+<? include "../include/head.html"; // 헤더 파일 포함 ?>
 <style type="text/css">
-	.nav-pills > li.active > a,
-	.nav-pills > li.active > a:hover,
-	.nav-pills > li.active > a:focus {
-		color: #fff;
-		background-color: #5bc0de;
-	}
+    /* 네비게이션 스타일 정의 */
+    .nav-pills > li.active > a,
+    .nav-pills > li.active > a:hover,
+    .nav-pills > li.active > a:focus {
+        color: #fff;
+        background-color: #5bc0de;
+    }
 
-	.nav > li > a {
-		position: relative;
-		display: block;
-		padding: 10px 15px;
-		background-color: #eee;
-	}
+    .nav > li > a {
+        position: relative;
+        display: block;
+        padding: 10px 15px;
+        background-color: #eee;
+    }
 
-	.nav a{
-		color:#5bc0de;
-	}
+    .nav a{
+        color:#5bc0de;
+    }
 </style>
 </head>
 <body> 
 
-    <!-- Fixed navbar -->
+    <!-- 고정된 네비게이션 바 -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
           <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
-          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
-		  <div class="navpress">
-			  <a href="/guide/">인도자</a> > <a href="/guide/guide_content_sub.html?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>">봉사기록</a> > <a href="#"><strong>구역상세</strong></a>
-		  </div>
+          <!-- 네비게이션 경로 표시 -->
+          <div class="navpress">
+              <a href="/guide/">인도자</a> > <a href="/guide/guide_content_sub.html?map_idx=<?=$req_map_idx ?>&map_service=<?=$req_map_service ?>">봉사기록</a> > <a href="#"><strong>구역상세</strong></a>
+          </div>
       </div>
     </nav>
-
 
     <div class="page">
       <div class="container">
 
-		  <div class="row marginbottom10">
-			<div class="col-sm-12">
-			  <ul class="nav nav-pills">
-				<li<?=($req_map_service=="normal")?" class=\"active\"":"" ?>><a href="guide_choice.html?map_service=normal">일반</a></li>
-				<li<?=($req_map_service=="apt")?" class=\"active\"":"" ?>><a href="guide_choice.html?map_service=apt">아파트</a></li>
-				<li<?=($req_map_service=="display")?" class=\"active\"":"" ?>><a href="guide_choice.html?map_service=display">전시대</a></li>
-				<li<?=($req_map_service=="letter")?" class=\"active\"":"" ?>><a href="guide_choice.html?map_service=letter">편지봉사</a></li>
-			  </ul>
-			</div>
-		  </div>
+          <!-- 봉사 구역 선택 탭 -->
+          <div class="row marginbottom10">
+            <div class="col-sm-12">
+              <ul class="nav nav-pills">
+                <!-- 각 구역 선택 탭 -->
+                <li<?=($req_map_service == "normal") ? " class=\"active\"" : "" ?>><a href="guide_choice.html?map_service=normal">일반</a></li>
+                <li<?=($req_map_service == "apt") ? " class=\"active\"" : "" ?>><a href="guide_choice.html?map_service=apt">아파트</a></li>
+                <li<?=($req_map_service == "display") ? " class=\"active\"" : "" ?>><a href="guide_choice.html?map_service=display">전시대</a></li>
+                <li<?=($req_map_service == "letter") ? " class=\"active\"" : "" ?>><a href="guide_choice.html?map_service=letter">편지봉사</a></li>
+              </ul>
+            </div>
+          </div>
 
-		<div class="row col-sm-12 marginbottom10">
-
-			  <ul class="nav nav-pills">
+        <!-- 선택된 구역에 대한 상세 정보 -->
+        <div class="row col-sm-12 marginbottom10">
+            <ul class="nav nav-pills">
 <?
-$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank";
-$result=mysql_query($sql);
+$sql = "SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank"; // 선택된 서비스에 해당하는 구역을 가져오는 쿼리
+$result = mysql_query($sql);
 
-while($rs=mysql_fetch_array($result)){
+while($rs = mysql_fetch_array($result)){
 
-	$map_idx=$rs[map_idx];
-	$map_no=$rs[map_no];
-	?>
-				<li<?=($map_idx==$req_map_idx)?" class=\"active\"":"" ?>><a href="guide_content_sub.html?map_idx=<?=$map_idx ?>&map_service=<?=$req_map_service ?>"><?=$map_no ?></a></li>
-	<?
+    $map_idx = $rs['map_idx']; // 구역 인덱스
+    $map_no = $rs['map_no']; // 구역 번호
+    ?>
+                <!-- 구역 번호 링크 -->
+                <li<?=($map_idx == $req_map_idx) ? " class=\"active\"" : "" ?>><a href="guide_content_sub.html?map_idx=<?=$map_idx ?>&map_service=<?=$req_map_service ?>"><?=$map_no ?></a></li>
+    <?
 }
 ?>
-			  </ul>
+            </ul>
+        </div>
 
-		</div>
-
-		
-		<div class="row col-sm-12 ">
-			<div id="map_normal_list"></div>
-		</div>
-
+        <div class="row col-sm-12 ">
+            <div id="map_normal_list"></div> <!-- 구역의 상세 정보를 표시할 영역 -->
+        </div>
 
       </div>
     </div>
 
-
-<?include "../include/footer.html";?>
+<? include "../include/footer.html"; // 푸터 파일 포함 ?>
 
 </body>
 </html>
 <script src="/bootstrap/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 <!--
+    var map_sub_idx = "<?=$req_map_sub_idx ?>";
 
-	var map_sub_idx="<?=$req_map_sub_idx ?>";
+    // 구역의 상세 정보를 가져오는 함수 호출
+    map_list(<?=$req_map_sub_idx ?>)
 
-	map_list(<?=$req_map_sub_idx ?>)
+    function map_list(map_sub_idx){
+        
+        if (map_sub_idx == 0)
+        {
+            $("#map_normal_list").html(""); // 구역이 선택되지 않은 경우
+            return;
+        }
 
-	function map_list(map_sub_idx){
-		
-		if (map_sub_idx==0)
-		{
-			$("#map_normal_list").html("");
-			return;
-		}
+        var map_service = "<?=$req_map_service ?>";
 
-		var map_service="<?=$req_map_service ?>";
+        if (map_service == "display")
+        {
+            return; // 전시대 서비스는 처리하지 않음
+        }
 
-		if (map_service=="display")
-		{
-			return;
-		}
+        $.ajax({
+            type: "post",
+            url: "guide_choice_work.php",
+            data: "work=map_normal_list2&map_sub_idx=" + map_sub_idx,
+            success: function (msg) {
+                $("#map_normal_list").html(msg); // 구역의 상세 정보 로드
+            }
+        });    
 
-		$.ajax({
-			type: "post",
-			url: "guide_choice_work.php",
-			data: "work=map_normal_list2&map_sub_idx="+map_sub_idx,
-			success: function (msg) {
-				$("#map_normal_list").html(msg);
-			}
-		});	
+    }
 
-	}
+    function map_info_view_del(map_content_idx){
+        // 봉사기록 삭제
 
+        $.ajax({
+            type: "post",
+            url: "/home/ministry_work.php",
+            data: "work=map_info_view_del&map_content_idx=" + map_content_idx,
+            success: function (msg) {
+                if (msg == "ok"){
+                    $("#map_content_idx_" + map_content_idx).remove(); // 봉사 기록 삭제
+                    map_list(map_sub_idx); // 리스트 갱신
+                }
+            }
+        });        
+    }
 
+    function map_info_view(map_list_idx, map_list_road, map_list_road_no, map_list_floor, map_list_info, map_list_house_idx){
+        // 봉사기록 보기
 
-	function map_info_view_del(map_content_idx){
-		//봉사기록삭제
+        map_info = map_list_road + " " + map_list_road_no + " " + map_list_floor + " " + map_list_info;
 
-		$.ajax({
-			type: "post",
-			url: "/home/ministry_work.php",
-			data: "work=map_info_view_del&map_content_idx=" + map_content_idx,
-			success: function (msg) {
-				if (msg=="ok"){
-					$("#map_content_idx_"+map_content_idx).remove();
-					map_list(map_sub_idx);
-				}
-			}
-		});		
-	}
+        $.ajax({
+            type: "post",
+            url: "/home/ministry_work.php",
+            data: "work=map_info_view&map_list_idx=" + map_list_idx,
+            success: function (msg) {
+                $("#map_list_idx").val(map_list_idx);
+                $("#map_content_list").html(msg); // 기록 로드
+            }
+        });
 
-	function map_info_view(map_list_idx, map_list_road, map_list_road_no, map_list_floor, map_list_info, map_list_house_idx){
-		//봉사기록보기
+        // 정보 폼에 값 설정
+        $("#map_list_road").val(map_list_road);
+        $("#map_list_road_no").val(map_list_road_no);
+        $("#map_list_floor").val(map_list_floor);
+        $("#map_list_info").val(map_list_info);
+        $("#house_idx").val(map_list_house_idx);
+        $("#modal-title2").html("<strong>" + map_info + "</strong>");
+        $("#myModalInfo").modal(); // 모달창 띄우기
 
-		map_info = map_list_road+" "+map_list_road_no+" "+map_list_floor+" "+map_list_info;
+    }
 
-		$.ajax({
-			type: "post",
-			url: "/home/ministry_work.php",
-			data: "work=map_info_view&map_list_idx=" + map_list_idx,
-			success: function (msg) {
-				$("#map_list_idx").val(map_list_idx);
-				$("#map_content_list").html(msg);
-			}
-		});
+    function map_info_save() {
+        // 봉사기록 저장
 
-		$("#map_list_road").val(map_list_road);
-		$("#map_list_road_no").val(map_list_road_no);
-		$("#map_list_floor").val(map_list_floor);
-		$("#map_list_info").val(map_list_info);
-		$("#house_idx").val(map_list_house_idx);
-		$("#modal-title2").html("<strong>"+map_info+"</strong>");
-        $("#myModalInfo").modal();
+        var map_list_idx = $("#map_list_idx").val();
+        var map_content_content = $("#map_content_content").val();
 
-	}
+        $.ajax({
+            type: "post",
+            url: "/home/ministry_work.php",
+            data: "work=map_info_save&map_list_idx=" + map_list_idx + "&map_content_content=" + map_content_content,
+            success: function (msg) {    
+                $("#map_content_content").val(""); // 입력 필드 초기화
+                map_list(map_sub_idx); // 리스트 갱신
+            }
+        });
+    }
 
-	function map_info_save() {
-		//봉사기록저장
+    function map_save(map_list_idx) {
+        // 구분선 저장
 
-		var map_list_idx = $("#map_list_idx").val();
-		var map_content_content = $("#map_content_content").val();
+        var map_list_line = $("#map_list_line_" + map_list_idx).prop("checked") == true ? "1" : "0";
 
-		$.ajax({
-			type: "post",
-			url: "/home/ministry_work.php",
-			data: "work=map_info_save&map_list_idx=" + map_list_idx + "&map_content_content=" + map_content_content,
-			success: function (msg) {	
-				$("#map_content_content").val("");
-				map_list(map_sub_idx);
-			}
-		});
-	}
+        $.ajax({
+            type: "post",
+            url: "guide_choice_work.php",
+            data: "work=map_save&map_list_idx=" + map_list_idx + "&map_list_line=" + map_list_line,
+            success: function (msg) {
+            }
+        });
+    }
 
-	function map_save(map_list_idx) {
-		//구분선 저장
+    function map_list_visit_Y(map_sub_idx, map_list_idx){
+        // 방문 항목 체크
 
-		var map_list_line = $("#map_list_line_"+map_list_idx).prop("checked")==true?"1":"0";
+        var visit_Y = $("#map_list_visit_Y_" + map_list_idx);
+        var visit_N = $("#map_list_visit_N_" + map_list_idx);
 
-		$.ajax({
-			type: "post",
-			url: "guide_choice_work.php",
-			data: "work=map_save&map_list_idx=" + map_list_idx + "&map_list_line=" + map_list_line,
-			success: function (msg) {
-			}
-		});
-	}
+        visit_N.prop("checked", false);
 
+        var set_visit = "";
 
+        if (visit_Y.prop("checked") == true){
+            set_visit = "Y";
+        } else {
+            set_visit = "";
+        }
 
-	function map_list_visit_Y(map_sub_idx, map_list_idx){
-		//방문 항목 체크
+        map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
+    }
 
-		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
-		var visit_N=$("#map_list_visit_N_"+map_list_idx);
+    function map_list_visit_N(map_sub_idx, map_list_idx){
+        // 부재자 항목 체크
 
-		visit_N.prop("checked",false);
+        var visit_Y = $("#map_list_visit_Y_" + map_list_idx);
+        var visit_N = $("#map_list_visit_N_" + map_list_idx);
 
-		var set_visit="";
+        visit_Y.prop("checked", false);
 
-		if (visit_Y.prop("checked")==true){
-			set_visit="Y";
-		}else{
-			set_visit="";
-		}
+        var set_visit = "";
 
-		map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
-	}
+        if (visit_N.prop("checked") == true){
+            set_visit = "N";
+        } else {
+            set_visit = "";
+        }
 
-	function map_list_visit_N(map_sub_idx, map_list_idx){
-		//부재자 항목 체크
+        map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
+    }
 
-		var visit_Y=$("#map_list_visit_Y_"+map_list_idx);
-		var visit_N=$("#map_list_visit_N_"+map_list_idx);
+    function map_list_enter_Y(map_sub_idx, map_list_idx){
+        // 방문 거절 항목 체크
 
-		visit_Y.prop("checked",false);
+        var enter_Y = $("#map_list_enter_Y_" + map_list_idx);
+        var enter_N = $("#map_list_enter_N_" + map_list_idx);
 
-		var set_visit="";
+        enter_N.prop("checked", false);
 
-		if (visit_N.prop("checked")==true){
-			set_visit="N";
-		}else{
-			set_visit="";
-		}
+        var set_enter = "";
 
-		map_list_update(map_sub_idx, map_list_idx, "map_list_visit", set_visit);
-	}
+        if (enter_Y.prop("checked") == true){
+            set_enter = "Y";
+        } else {
+            set_enter = "";
+        }
 
-	function map_list_enter_Y(map_sub_idx, map_list_idx){
-		//방문 거절 항목 체크
+        map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
+    }
 
-		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
-		var enter_N=$("#map_list_enter_N_"+map_list_idx);
+    function map_list_enter_N(map_sub_idx, map_list_idx){
+        // 방문 금지 항목 체크
 
-//		enter_Y.prop("checked",true);
-		enter_N.prop("checked",false);
+        var enter_Y = $("#map_list_enter_Y_" + map_list_idx);
+        var enter_N = $("#map_list_enter_N_" + map_list_idx);
 
-		var set_enter="";
+        enter_Y.prop("checked", false);
 
-		if (enter_Y.prop("checked")==true){
-			set_enter="Y";
-		}else{
-			set_enter="";
-		}
+        var set_enter = "";
 
-		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
-	}
+        if (enter_N.prop("checked") == true){
+            set_enter = "N";
+        } else {
+            set_enter = "";
+        }
 
-	function map_list_enter_N(map_sub_idx, map_list_idx){
-		//방문 금지 항목 체크
+        map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
+    }
 
-		var enter_Y=$("#map_list_enter_Y_"+map_list_idx);
-		var enter_N=$("#map_list_enter_N_"+map_list_idx);
+    function map_list_update(map_sub_idx, map_list_idx, field, val){
+        // 리스트 업데이트 (방문, 부재, 방문 거절, 방문 금지 항목)
 
-		enter_Y.prop("checked",false);
-//		enter_N.prop("checked",true);
+        $.ajax({
+            type: "post",
+            url: "guide_choice_work.php",
+            data: "work=map_list_update&map_sub_idx=" + map_sub_idx + "&map_list_idx=" + map_list_idx + "&field=" + field + "&val=" + val,
+            success: function (msg) {
+            }
+        });    
 
-		var set_enter="";
-
-		if (enter_N.prop("checked")==true){
-			set_enter="N";
-		}else{
-			set_enter="";
-		}
-
-		map_list_update(map_sub_idx, map_list_idx, "map_list_enter", set_enter);
-	}
-
-	function map_list_update(map_sub_idx, map_list_idx, field, val){
-
-		$.ajax({
-			type: "post",
-			url: "guide_choice_work.php",
-			data: "work=map_list_update&map_sub_idx="+map_sub_idx+"&map_list_idx="+map_list_idx+"&field="+field+"&val="+val,
-			success: function (msg) {
-			}
-		});	
-
-	}
-
+    }
 //-->
 </script>
 
-
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModalInfo" role="dialog">
+<!-- 봉사기록 모달창 -->
+<div class="modal fade" id="myModalInfo" role="dialog">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
           <h4 class="modal-title" id="modal-title2">정보</h4>
 
-			  <div class="form-group row">
-				<div class="text-left col-sm-9 col-xs-8">
-				  <input type="text" id="map_list_road" class="form-control<?if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="길이름">
-				  <input type="text" id="map_list_road_no" class="form-control<?if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="지번">
-				  <input type="text" id="map_list_floor" class="form-control<?if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="층">
-				  <input type="text" id="map_list_info" class="form-control" placeholder="이름/호">
-				  <select id="house_idx" class="form-control<?if (!mgr_check("1,2")){echo " hidden";} ?>">
-				  <?
-					$sql="select house_idx, house_type from db_house_type";
-					$result_type=mysql_query($sql);
-					while($rs=mysql_fetch_array($result_type)){
-						$house_idx=$rs[house_idx];
-						$house_type=$rs[house_type];
-						echo "<option value='".$house_idx."'>".$house_type."</option>";
-					}
-				  ?>
-				  </select>
-				</div>
-				<div class="text-right col-sm-3 col-xs-4">
-				  <button type="button" class="btn btn-success btn-sm" data-dismiss="modal" onclick="map_info_edit();"><span class="glyphicon glyphicon-edit"></span> 수정</button>	
-				</div>
-			  </div>
+          <div class="form-group row">
+            <div class="text-left col-sm-9 col-xs-8">
+              <input type="text" id="map_list_road" class="form-control<? if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="길이름">
+              <input type="text" id="map_list_road_no" class="form-control<? if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="지번">
+              <input type="text" id="map_list_floor" class="form-control<? if (!mgr_check("1,2")){echo " hidden";} ?>" placeholder="층">
+              <input type="text" id="map_list_info" class="form-control" placeholder="이름/호">
+              <select id="house_idx" class="form-control<? if (!mgr_check("1,2")){echo " hidden";} ?>">
+              <?
+                $sql="select house_idx, house_type from db_house_type";
+                $result_type = mysql_query($sql);
+                while($rs = mysql_fetch_array($result_type)){
+                    $house_idx = $rs['house_idx'];
+                    $house_type = $rs['house_type'];
+                    echo "<option value='".$house_idx."'>".$house_type."</option>";
+                }
+              ?>
+              </select>
+            </div>
+            <div class="text-right col-sm-3 col-xs-4">
+              <button type="button" class="btn btn-success btn-sm" data-dismiss="modal" onclick="map_info_edit();"><span class="glyphicon glyphicon-edit"></span> 수정</button>    
+            </div>
+          </div>
         </div>
         <div class="modal-body">
-			<form role="form">
-			  <strong>봉사기록</strong> - 봉사를 하면서 있었던 특이사항을 기록하세요.
-			  <div class="form-group">
-				  <input type="hidden" name="map_list_idx" id="map_list_idx">
-				  <textarea id="map_content_content" rows="4" cols="" class="form-control"></textarea>
-			  </div>
-			</form>	
-			<div class="text-right">
-				<button type="button" class="btn btn-success btn-sm " data-dismiss="modal" onclick="map_info_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>	
-			</div>
+            <form role="form">
+              <strong>봉사기록</strong> - 봉사를 하면서 있었던 특이사항을 기록하세요.
+              <div class="form-group">
+                  <input type="hidden" name="map_list_idx" id="map_list_idx">
+                  <textarea id="map_content_content" rows="4" cols="" class="form-control"></textarea>
+              </div>
+            </form>    
+            <div class="text-right">
+                <button type="button" class="btn btn-success btn-sm " data-dismiss="modal" onclick="map_info_save();"><span class="glyphicon glyphicon-ok"></span> 저장</button>    
+            </div>
 
-			  <div class="">
-				  <div id="map_content_list" style="height:100px;overflow-y:auto;"></div>
-			  </div>
-				
+              <div class="">
+                  <div id="map_content_list" style="height:100px;overflow-y:auto;"></div>
+              </div>
+                
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> 닫기</button>
         </div>
       </div>
     </div>
-  </div>
+</div>

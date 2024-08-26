@@ -1,49 +1,54 @@
 <?
-include "../include/db_connect.php";
-include "../include/function.php";
+include "../include/db_connect.php"; // 데이터베이스 연결 파일 포함
+include "../include/function.php"; // 유틸리티 함수 포함
 
-session_check();
+session_check(); // 세션 유효성 검사
 
+// 사용자가 관리자 권한(1,2,3)을 가지고 있는지 확인
 if (!mgr_check("1,2,3")){
-	echo "<script>location.href='/home/';</script>";
+	echo "<script>location.href='/home/';</script>"; // 권한이 없으면 홈으로 리디렉션
 }
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
 <head>
-<?include "../include/head.html";?>
+<?include "../include/head.html";?> <!-- HTML 헤더 파일 포함 -->
 <style type="text/css">
+	/* 봉사 기록 메뉴의 스타일을 정의 */
 	.li-record{
-		background-color: #5bc0de !important;
-		border-color: #46b8da;
+		background-color: #5bc0de !important; /* 배경색 설정 */
+		border-color: #46b8da; /* 테두리 색상 설정 */
 	}
 </style>
 </head>
 <body> 
 
-    <!-- Fixed navbar -->
+    <!-- 상단 고정 네비게이션 바 -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
-          <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
+          <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> <!-- 홈 아이콘 -->
           <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
 		  <div class="navpress">
-			  <a href="/guide/"><strong>인도자</strong></a>
+			  <a href="/guide/"><strong>인도자</strong></a> <!-- 현재 위치 표시 -->
 		  </div>
       </div>
     </nav>
 
-
+    <!-- 페이지 내용 -->
     <div class="page">
       <div class="container">
 	  <div class="admin-menu">
 		<ul>
+			<!-- 구역 지정 메뉴 옵션이 활성화되어 있는 경우 표시 -->
 			<?if (site_option("guide_choice_show")){?>
 		  <a href="guide_choice.html?map_service=normal"><li>구역<br>지정</li></a>
 			<?}?>
+			<!-- 구역 추출 메뉴 옵션이 활성화되어 있는 경우 표시 -->
 			<?if (site_option("guide_extract_show")){?>
 		  <a href="guide_extract.html?map_service=normal"><li>구역<br>추출</li></a>
 			<?}?>
+			<!-- 관리자 권한을 가진 사용자에게만 봉사 기록 메뉴 표시 -->
 		  <?if (mgr_check("1,2")){?>
 		  <a href="guide_content.html?map_service=normal"><li class="li-record">봉사<br>기록</li></a>
 		  <?}?>
@@ -52,9 +57,8 @@ if (!mgr_check("1,2,3")){
       </div>
     </div>
 
-
-<?include "../include/footer.html";?>
+<?include "../include/footer.html";?> <!-- 푸터 파일 포함 -->
 
 </body>
 </html>
-<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script> <!-- 부트스트랩 JS 포함 -->

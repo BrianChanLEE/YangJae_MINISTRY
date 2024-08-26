@@ -1,74 +1,77 @@
 <?
-include "../include/db_connect.php";
-include "../include/function.php";
+include "../include/db_connect.php"; // 데이터베이스 연결 파일 포함
+include "../include/function.php"; // 공통 함수 파일 포함
 
-session_check();
+session_check(); // 세션 확인 함수 호출
 
+// 관리 권한 확인 (1, 2, 3 등급만 접근 가능)
 if (!mgr_check("1,2,3")){
-	echo "<script>location.href='/home/';</script>";
+    echo "<script>location.href='/home/';</script>"; // 권한이 없으면 홈으로 리다이렉트
 }
 
-$req_map_service=$_REQUEST["map_service"];
+$req_map_service = $_REQUEST["map_service"]; // 요청된 맵 서비스 변수 설정
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
 <head>
-<?include "../include/head.html";?>
+<? include "../include/head.html"; // 헤더 파일 포함 ?>
 </head>
 <body> 
 
-    <!-- Fixed navbar -->
+    <!-- 고정된 네비게이션 바 -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
+          <!-- 홈 아이콘 -->
           <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
-          <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
-		  <div class="navpress">
-			  <a href="/guide/">인도자</a> > <a href="#"><strong>구역지정</strong></a>
-		  </div>
+          <!-- 네비게이션 경로 표시 -->
+          <div class="navpress">
+              <a href="/guide/">인도자</a> > <a href="#"><strong>구역지정</strong></a>
+          </div>
       </div>
     </nav>
-
 
     <div class="page">
       <div class="container">
 
-		  <div class="row marginbottom10">
-			<div class="col-sm-12">
-			  <ul class="nav nav-pills">
-				<li<?=($req_map_service=="normal")?" class=\"active\"":"" ?>><a href="?map_service=normal">일반</a></li>
-				<li<?=($req_map_service=="apt")?" class=\"active\"":"" ?>><a href="?map_service=apt">아파트</a></li>
-				<li<?=($req_map_service=="display")?" class=\"active\"":"" ?>><a href="?map_service=display">전시대</a></li>
-				<li<?=($req_map_service=="letter")?" class=\"active\"":"" ?>><a href="?map_service=letter">편지봉사</a></li>
-			  </ul>
-			</div>
-		  </div>
+          <!-- 상단 네비게이션 필터 -->
+          <div class="row marginbottom10">
+            <div class="col-sm-12">
+              <ul class="nav nav-pills">
+                <!-- 필터별 버튼 (일반, 아파트, 전시대, 편지봉사) -->
+                <li<?=($req_map_service == "normal") ? " class=\"active\"" : "" ?>><a href="?map_service=normal">일반</a></li>
+                <li<?=($req_map_service == "apt") ? " class=\"active\"" : "" ?>><a href="?map_service=apt">아파트</a></li>
+                <li<?=($req_map_service == "display") ? " class=\"active\"" : "" ?>><a href="?map_service=display">전시대</a></li>
+                <li<?=($req_map_service == "letter") ? " class=\"active\"" : "" ?>><a href="?map_service=letter">편지봉사</a></li>
+              </ul>
+            </div>
+          </div>
 
-		<div class="row col-sm-12 marginbottom10">
+        <div class="row col-sm-12 marginbottom10">
 <?
-$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank";
-$result=mysql_query($sql);
+$sql = "SELECT * FROM map_normal WHERE map_service = '$req_map_service' order by map_rank"; // 선택된 맵 서비스에 해당하는 구역 리스트를 가져오는 쿼리
+$result = mysql_query($sql);
 
-while($rs=mysql_fetch_array($result)){
+while($rs = mysql_fetch_array($result)){
 
-	$map_idx=$rs[map_idx];
-	$map_service=$rs[map_service];
-	$map_no=$rs[map_no];
+    $map_idx = $rs['map_idx']; // 구역 인덱스
+    $map_service = $rs['map_service']; // 구역 서비스 종류
+    $map_no = $rs['map_no']; // 구역 번호
 ?>
 
-		<div class="btn-group" id="map_idx_<?=$map_idx ?>">
-		  <button type="button" class="btn btn-success btn-default5" onclick="location.href='guide_choice_sub.html?map_idx=<?=$map_idx ?>&map_service=<?=$map_service ?>'" id="map_no_<?=$map_idx ?>"><?=$map_no ?></button>
-		</div>
+        <!-- 각 구역별 버튼 -->
+        <div class="btn-group" id="map_idx_<?=$map_idx ?>">
+          <button type="button" class="btn btn-success btn-default5" onclick="location.href='guide_choice_sub.html?map_idx=<?=$map_idx ?>&map_service=<?=$map_service ?>'" id="map_no_<?=$map_idx ?>"><?=$map_no ?></button>
+        </div>
 <?
 }
 ?>
-		</div>
+        </div>
 
       </div>
     </div>
 
-
-<?include "../include/footer.html";?>
+<? include "../include/footer.html"; // 푸터 파일 포함 ?>
 
 </body>
 </html>
-<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script> <!-- Bootstrap JS 파일 포함 -->

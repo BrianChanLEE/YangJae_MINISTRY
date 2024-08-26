@@ -1,36 +1,40 @@
 <?
-include "../include/db_connect.php";
-include "../include/function.php";
+include "../include/db_connect.php"; // 데이터베이스 연결 파일 포함
+include "../include/function.php"; // 유틸리티 함수 포함
 
-session_check();
+session_check(); // 세션 체크 함수 호출
 
+// 사용자가 관리자 권한(1,2,3)을 가지고 있는지 확인
 if (!mgr_check("1,2,3")){
-	echo "<script>location.href='/home/';</script>";
+	echo "<script>location.href='/home/';</script>"; // 권한이 없으면 홈으로 리디렉션
 }
 
+// 요청된 map_service 값을 받아옴
 $req_map_service=$_REQUEST["map_service"];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
 <head>
-<?include "../include/head.html";?>
+<?include "../include/head.html";?> <!-- HTML 헤더 파일 포함 -->
 </head>
 <body> 
 
-    <!-- Fixed navbar -->
+    <!-- 상단 고정 네비게이션 바 -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
           <a class="navbar-brand" href="/home/"><img src="/img/icon-home.png"></a> 
           <!-- <a class="navbar-sos" href="#"><img src="/img/icon-sos.png"></a> -->
 		  <div class="navpress">
-			  <a href="/guide/">인도자</a> > <a href="#"><strong>구역추출</strong></a>
+			  <a href="/guide/">인도자</a> > <a href="#"><strong>구역추출</strong></a> <!-- 현재 위치 표시 -->
 		  </div>
       </div>
     </nav>
 
+    <!-- 페이지 내용 -->
     <div class="page">
       <div class="container">
 
+		  <!-- 서비스 유형 선택 탭 -->
 		  <div class="row marginbottom10">
 			<div class="col-sm-12">
 			  <ul class="nav nav-pills">
@@ -42,18 +46,20 @@ $req_map_service=$_REQUEST["map_service"];
 			</div>
 		  </div>
 
+		<!-- 구역 선택 -->
 		<div class="row col-sm-12 marginbottom10">
 <?
-$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank";
+$sql="SELECT * FROM map_normal WHERE map_service='$req_map_service' order by map_rank"; // 선택된 서비스 유형의 구역을 가져옴
 $result=mysql_query($sql);
 
-while($rs=mysql_fetch_array($result)){
+while($rs=mysql_fetch_array($result)){ // 구역 목록을 순차적으로 출력
 
-	$map_idx=$rs[map_idx];
-	$map_service=$rs[map_service];
-	$map_no=$rs[map_no];
+	$map_idx=$rs[map_idx]; // 구역 인덱스
+	$map_service=$rs[map_service]; // 서비스 유형
+	$map_no=$rs[map_no]; // 구역 번호
 ?>
 
+		  <!-- 각 구역을 선택할 수 있는 버튼과 체크박스 -->
 		  <input type="checkbox" class="check_map_idx" name="check_map_idx" id="check_map_idx_<?=$map_idx ?>" value="<?=$map_idx ?>" style="display:none;">
 		  <button type="button" id="map_idx_<?=$map_idx ?>" onclick="map_choice(<?=$map_idx ?>)" class="map_idx btn btn-info btn-default5"><?=$map_no ?></button>
 	
@@ -62,20 +68,20 @@ while($rs=mysql_fetch_array($result)){
 ?>
 		</div>
 
-		
-
+		<!-- 세부 선택 (주택 유형, 방문 상태 등) -->
 		<div class="row col-sm-12 marginbottom10">
 		<h3>세부선택</h3>
 <?
-$sql="SELECT * FROM db_house_type";
+$sql="SELECT * FROM db_house_type"; // 주택 유형 목록을 가져옴
 $result=mysql_query($sql);
 
-while($rs=mysql_fetch_array($result)){
+while($rs=mysql_fetch_array($result)){ // 주택 유형 목록을 순차적으로 출력
 
-	$house_idx=$rs[house_idx];
-	$house_type=$rs[house_type];
+	$house_idx=$rs[house_idx]; // 주택 유형 인덱스
+	$house_type=$rs[house_type]; // 주택 유형 이름
 ?>
 
+		  <!-- 주택 유형 선택할 수 있는 버튼과 체크박스 -->
 		  <input type="checkbox" name="check_house_idx" id="check_house_idx_<?=$house_idx ?>" value="<?=$house_idx ?>" style="display:none;">
 		  <button type="button" id="house_idx_<?=$house_idx ?>" onclick="map_service_choice(<?=$house_idx ?>)" class="btn btn-info btn-default5" ><?=$house_type ?></button>
 		
@@ -83,6 +89,7 @@ while($rs=mysql_fetch_array($result)){
 }
 ?>
 
+		  <!-- 방문 상태와 방문 금지 상태 선택 버튼과 체크박스 -->
 		  <input type="checkbox" id="check_map_list_visit" value="N" style="display:none;">
 		  <button type="button" id="map_list_visit" onclick="map_visit_choice()" class="btn btn-info btn-default5" >부재자,<br>남은집</button>
 
@@ -92,6 +99,7 @@ while($rs=mysql_fetch_array($result)){
 		  <input type="checkbox" class="check_map_list_enter" name="check_map_list_enter" id="check_map_list_enter_N" value="N" style="display:none;">
 		  <button type="button" id="map_list_enter_N" onclick="map_enter_choice('N')" class="map_list btn btn-info btn-default5" >방문<br>금지</button>
 		  
+		  <!-- 추출 버튼 -->
 		  <button type="button" id="btn-extract" onclick="map_extract()" class="map_list btn btn-default btn-default5" >추출</button>
 
 		</div>
@@ -99,19 +107,21 @@ while($rs=mysql_fetch_array($result)){
 
     </div>
 
-<?include "../include/footer.html";?>
+<?include "../include/footer.html";?> <!-- 푸터 파일 포함 -->
 
 </body>
 </html>
-<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script> <!-- 부트스트랩 JS 포함 -->
 <script type="text/javascript">
 <!--
+// 구역 선택 함수
 	function map_choice(map_idx){
 
+		// 모든 체크박스를 초기화
 		$(".check_map_idx").prop("checked",false);
 		$(".map_idx").removeClass("btn-warning");
 
-		
+		// 선택된 구역의 체크박스와 버튼 색상 변경
 		var check_map_idx=$("#check_map_idx_"+map_idx);
 		var map_idx=$("#map_idx_"+map_idx);
 
@@ -128,6 +138,7 @@ while($rs=mysql_fetch_array($result)){
 
 	}	
 
+// 주택 유형 선택 함수
 	function map_service_choice(house_idx){
 		
 		var check_house_idx=$("#check_house_idx_"+house_idx);
@@ -146,6 +157,7 @@ while($rs=mysql_fetch_array($result)){
 
 	}	
 
+// 방문 상태 선택 함수
 	function map_visit_choice(){
 		
 		var check_map_list_visit=$("#check_map_list_visit");
@@ -164,6 +176,7 @@ while($rs=mysql_fetch_array($result)){
 
 	}
 
+// 방문 금지 상태 선택 함수
 	function map_enter_choice(YN){
 		
 		if (YN=="Y"){
@@ -201,10 +214,12 @@ while($rs=mysql_fetch_array($result)){
 
 	}		
 
+// 구역 추출 함수
 	function map_extract(){
 
 		var map_idx="";
 
+		// 선택된 구역 인덱스들을 모아서 map_idx 변수에 저장
 		$("input[name=check_map_idx]:checked").each(function (index){
 			
 			if (index>0){
@@ -215,13 +230,14 @@ while($rs=mysql_fetch_array($result)){
 		});
 
 		if (map_idx==""){
-			alert("구역을 선택하세요");
+			alert("구역을 선택하세요"); // 구역이 선택되지 않은 경우 경고
 			return;
 		}		
 
 
 		var check_house_idx="";
 
+		// 선택된 주택 유형 인덱스들을 모아서 check_house_idx 변수에 저장
 		$("input[name=check_house_idx]:checked").each(function (index){
 			
 			if (index>0){
@@ -236,7 +252,7 @@ while($rs=mysql_fetch_array($result)){
 		var check_map_list_visit="";
 
 		if ($("#check_map_list_visit").prop("checked")==true){
-			check_map_list_visit="N";
+			check_map_list_visit="N"; // 부재자/남은집 선택된 경우
 		}else{
 			check_map_list_visit="";
 		}
@@ -244,6 +260,7 @@ while($rs=mysql_fetch_array($result)){
 
 		var check_map_list_enter="";
 
+		// 방문 거절 또는 방문 금지 상태 선택된 경우
 		$("input[name=check_map_list_enter]:checked").each(function (index){
 			
 			if (index>0){
@@ -253,6 +270,7 @@ while($rs=mysql_fetch_array($result)){
 				
 		});
 
+		// 선택된 값들로 추출 페이지로 이동
 		location.href="guide_extract_sub.html?map_idx="+map_idx+"&map_list_house_idx="+check_house_idx+"&map_list_visit="+check_map_list_visit+"&map_list_enter="+check_map_list_enter+"&map_service=<?=$map_service ?>";
 
 	}
